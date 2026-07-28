@@ -100,13 +100,13 @@ Integrates control, safety, and hardware into the final application and provides
 | **Developer 1** | Module 1: Peripheral Abstraction<br>Module 2: Input & Display Hardware | - MCU peripheral drivers<br>- SPI/I2C and ADC integration<br>- Button acquisition and debouncing<br>- Seven-segment and LCD display control<br>- Buzzer/tone generation and timing |
 | **Developer 2** | Module 3: Position & Motion Control<br>Module 4: Dispatch & Call Management<br>Module 5: Safety & Fault Handling<br>Module 6: Service, Telemetry & Persistence | - Motion profile and floor levelling<br>- LOOK dispatch and call bitmap logic<br>- Safety interrupts, overload, and fault handling<br>- Service console, telemetry, and persistent logging |
 
-### Developer 1: Hardware & Driver Implementation
+### Developer 1(Ahmed): Hardware & Driver Implementation
 - Develop Module 1: Peripheral Abstraction
 - Develop Module 2: Input & Display Hardware
 - Manage SPI / I2C device timing and peripheral integration
 - Verify button acquisition, display refresh, and LCD frame timing
 
-### Developer 2: Control Logic & Safety Integration
+### Developer 2 (Mohammed): Control Logic & Safety Integration
 - Develop Module 3: Position & Motion Control
 - Develop Module 4: Dispatch & Call Management
 - Develop Module 5: Safety & Fault Handling
@@ -115,7 +115,17 @@ Integrates control, safety, and hardware into the final application and provides
 
 ---
 
-## 5. Collaboration Notes
+## 5. Shared Work
+
+- Define and document pin assignments, signal names, and shared data structures.
+- Agree on call bitmap layout, motion state variables, and fault/event message formats.
+- Co-design the serial command interface, LCD page content, and telemetry frame structure.
+- Perform joint integration testing for button acquisition, display refresh, motion profiling, and safety overrides.
+- Review each other’s code for timing-critical interactions and safety behavior.
+
+---
+
+## 6. Collaboration Notes
 
 - Both developers agree on pin assignments, shared data structures, and call/position bitmaps.
 - Developer 1 provides stable hardware interfaces; Developer 2 consumes them in control logic.
