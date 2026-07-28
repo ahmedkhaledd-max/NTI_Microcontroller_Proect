@@ -11,7 +11,7 @@
 | Field | Value |
 |-------|-------|
 | **Project code** | `PRJ-08-ELEVATOR` |
-| **Team size** | 3 students (recommended) |
+| **Team size** | Ahmed Khaled - Mohammed essam |
 | **Build window** | Days 11 – 15 (Jul 26 – Jul 30, 2026) |
 | **Demo & submission** | July 30, 2026 |
 | **Dominant skill** | LOOK dispatch algorithm, three-device SPI bus, motion profiling |
