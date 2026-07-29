@@ -31,65 +31,130 @@ This project implements a four-floor elevator controller using an ATmega32A MCU.
 
 ---
 
-## 3. Project Modules
+## 3. # Project Modules
 
-The system is divided into six modules with distinct responsibilities. This supports parallel development and a clear separation between hardware, control, safety, and service.
-
-### Module 1: Peripheral Abstraction
-- GPIO driver and pin control
-- ADC sampling and conversion
-- SPI master transfer and device strobes
-- I2C/TWI LCD communication
-- Timer setup and PWM generation
-- External interrupt handling
-- UART serial interface
-
-Provides raw MCU peripheral services used by higher-level modules.
-
-### Module 2: Input & Display Hardware
-- 74HC165 button acquisition and debounce logic
-- 74HC595 floor display update and direction arrows
-- 16×2 LCD service display formatting and refresh
-- Buzzer / tone generation for arrival and alarms
-
-Encapsulates the physical input/output devices and their timing requirements.
-
-### Module 3: Position & Motion Control
-- ADC-based car position measurement and floor mapping
-- Motion profile computation (departure, slowdown, creep, levelling)
-- Hoist PWM control and floor arrival handling
-- Door PWM control and automatic open/close sequence
-
-Manages the moving parts of the elevator and ensures smooth, accurate floor arrival.
-
-### Module 4: Dispatch & Call Management
-- Button-to-call bitmap mapping
-- Call registration and duplicate suppression
-- LOOK dispatch algorithm and direction decision
-- Automatic parking and fire-service recall
-- Call rejection during emergency stop and fire service
-
-Handles how the elevator decides where to go next and which calls to serve.
-
-### Module 5: Safety & Fault Handling
-- Emergency stop and INT0 response
-- Door obstruction reversal and door jam detection
-- Overload inhibit and overcurrent monitoring
-- Travel timeout, over-travel, position sensor fault handling
-- Fault logging and persistent fault ring buffer
-
-Implements safety rules, fault detection, and service state transitions.
-
-### Module 6: Service, Telemetry & Persistence
-- Main system initialization and task coordination
-- Serial command parser and telemetry frame output every 2 s
-- LCD status pages, fault and bitmap reporting
-- EEPROM persistence for trips, door cycles, and faults
-- Test command support and event logging
-
-Integrates control, safety, and hardware into the final application and provides service interfaces.
+The software is divided into six independent modules. Each module has a single
+responsibility, enabling parallel development, easier testing, and clear
+separation between hardware drivers, control algorithms, safety logic, and
+system services.
 
 ---
+
+## Module 1: Peripheral Abstraction
+
+Responsible for configuring and accessing the ATmega32 hardware peripherals.
+
+### Responsibilities
+
+- GPIO configuration and digital I/O
+- ADC sampling and conversion
+- Timer initialization
+- PWM generation for hoist and door motors
+- External interrupt configuration (INT0, INT1)
+- LCD low-level interface
+- Buzzer control
+
+Provides low-level MCU services used by all higher-level modules.
+
+---
+
+## Module 2: Input & Display
+
+Responsible for reading user inputs and updating visual and audio indicators.
+
+### Responsibilities
+
+- Hall-call and car-call button acquisition
+- Door Open / Door Close buttons
+- Emergency Alarm and Emergency Stop inputs
+- Button debouncing and edge detection
+- Floor indicator LEDs
+- Direction LEDs (UP / DOWN)
+- Overload indicator LED
+- 16×2 LCD status display
+- Arrival gong and alarm buzzer
+
+Encapsulates all operator inputs and user interface devices.
+
+---
+
+## Module 3: Position & Motion Control
+
+Responsible for elevator movement and door control.
+
+### Responsibilities
+
+- Car position measurement from ADC
+- Floor detection and position filtering
+- Motion profile generation
+- Hoist motor PWM control
+- Door motor PWM control
+- Automatic door open/close sequence
+- Levelling at the destination floor
+
+Manages all mechanical movement while ensuring smooth and accurate positioning.
+
+---
+
+## Module 4: Dispatch & Call Management
+
+Responsible for processing requests and selecting the next destination.
+
+### Responsibilities
+
+- Button-to-call mapping
+- Hall and car call registration
+- Duplicate call suppression
+- LOOK dispatch algorithm
+- Direction selection
+- Automatic parking
+- Fire-service recall
+- Call rejection during Emergency Stop and Fire Service
+
+Determines where the elevator should travel next according to system requests.
+
+---
+
+## Module 5: Safety & Fault Handling
+
+Responsible for monitoring unsafe conditions and protecting the system.
+
+### Responsibilities
+
+- Emergency Stop handling (INT0)
+- Door safety edge monitoring (INT1)
+- Door obstruction recovery
+- Door timeout detection
+- Overload monitoring
+- Over-current monitoring
+- Position sensor fault detection
+- Over-travel protection
+- Travel timeout detection
+- Door-open-while-moving interlock
+- Fault management and fault logging
+
+Implements all safety functions and manages fault transitions.
+
+---
+
+## Module 6: System & Service Management
+
+Responsible for coordinating all software modules and providing system services.
+
+### Responsibilities
+
+- System initialization
+- Main scheduler and task execution
+- LCD service pages
+- Statistics management
+- Trip counter
+- Door cycle counter
+- Console command processing
+- Telemetry transmission
+- Event logging
+- Diagnostic and maintenance functions
+
+Integrates all software modules into a complete elevator control application.
 
 ## 4. Developer Responsibilities
 
