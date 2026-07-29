@@ -20,43 +20,34 @@
 
 ---
 
-## 2. Description
+## 2. Project Description
 
-A four-floor elevator (G, 1, 2, 3) with hall calls, car calls, a door with a
-safety edge, an overload sensor and a fire-service mode.
+The Elevator Control System is an embedded real-time application developed using the **ATmega32A** microcontroller and simulated in **SimulIDE**.
 
-The defining problem is **dispatch**. Ten call buttons can be pressed in any
-order at any time, and the controller must decide where to go next. The naive
-answer — "serve calls first-come, first-served" — makes the car yo-yo up and
-down the shaft and is what every beginner writes. This project requires the
-**LOOK algorithm**:
+The project simulates a four-floor elevator capable of responding to hall and cabin requests while implementing industrial safety features including emergency stop, overload protection, fire-service recall, position monitoring, automatic door control, and fault handling.
 
-> Keep travelling in the current direction while any call exists ahead of you in
-> that direction. When none does, reverse if there are calls behind you;
-> otherwise become idle.
+Unlike the original specification, the simulation uses several components connected directly to the ATmega32 to simplify testing and debugging in SimulIDE while maintaining the same software architecture and functional requirements.
 
-The second challenge is **motion profiling**. You cannot slam the hoist motor
-from full speed to zero at a floor — you must decelerate through a slowdown
-zone, creep, and stop in a levelling window a few centimetres wide. Getting the
-car to stop level with the floor, repeatably, from both directions, is the
-single hardest thing in this project.
+The software is organized into six independent modules:
 
-The third is **bus arbitration with three SPI devices**: a 25LC256 EEPROM, a
-74HC165 that reads all sixteen buttons, and a 74HC595 that drives the floor
-display. Each needs its own select strobe and none may interfere with another.
+1. Peripheral Abstraction
+2. Input & Display Hardware
+3. Position & Motion Control
+4. Dispatch & Call Management
+5. Safety & Fault Handling
+6. Service, Telemetry & Persistence
 
-Safety runs through everything: door reversal on obstruction, overload
-inhibition, emergency stop, and a fire-service recall that overrides every call
-in the system.
+This modular structure simplifies maintenance, testing, and future expansion.
 
 ---
+
 
 ## 3. Objectives
 
 1. Implement the LOOK dispatch algorithm over a call bitmap and prove it against
    a scripted call sequence.
 2. Drive a three-device SPI bus with independent selects and no interference.
-3. Read 16 buttons through a 74HC165 and drive a display through a 74HC595.
+3. Read 16 buttons connected to ATmega32
 4. Build a trapezoidal motion profile with slowdown, creep and levelling zones.
 5. Implement door control with an obstruction safety edge that reverses the door.
 6. Implement an overload inhibit that prevents departure without stranding
@@ -72,10 +63,9 @@ in the system.
 | LO-1 | State the LOOK algorithm precisely and implement it as bitmap arithmetic, not as a chain of `if`s |
 | LO-2 | Explain why FCFS dispatch is unacceptable and quantify the difference in journey time |
 | LO-3 | Sequence three SPI slaves with different strobe semantics (CS-low, load-pulse, latch-pulse) |
-| LO-4 | Read a 74HC165 chain: pulse `PL` low, then clock 16 bits in |
-| LO-5 | Design a trapezoidal speed profile and compute stopping distance from deceleration rate |
-| LO-6 | Implement door reversal so that the safety edge always wins over the close command |
-| LO-7 | Order safety overrides (E-stop > fire > overload > normal) and defend the ordering |
+| LO-4 | Design a trapezoidal speed profile and compute stopping distance from deceleration rate |
+| LO-5 | Implement door reversal so that the safety edge always wins over the close command |
+| LO-6 | Order safety overrides (E-stop > fire > overload > normal) and defend the ordering |
 
 ---
 
@@ -100,28 +90,26 @@ in the system.
 
 ## 6. Hardware Components
 
-| # | Component | Qty | SimulIDE part | Purpose |
-|---|-----------|:---:|---------------|---------|
-| 1 | ATmega32A | 1 | `atmega32` | Controller |
-| 2 | Potentiometer 10 kΩ | 1 | `Potentiometer` | Car position in the shaft |
-| 3 | Potentiometer 10 kΩ | 1 | `Potentiometer` | Car load (0 – 1000 kg) |
-| 4 | Potentiometer 10 kΩ | 1 | `Potentiometer` | Hoist motor current |
-| 5 | Potentiometer 10 kΩ | 1 | `Potentiometer` | Door position (0 – 100 %) |
-| 6 | 74HC165 shift register | 2 | `Shift Reg.` | 16 button inputs, chained |
-| 7 | 74HC595 shift register | 1 | `Shift Reg.` | 7-segment floor display |
-| 8 | Push button | 12 | `Push` | 6 hall calls, 4 car calls, door open, door close |
-| 9 | Switch (SPST) | 2 | `Switch` | Emergency alarm, fire service |
-| 10 | 7-segment, common cathode | 1 | `7Segment` | Floor indicator |
-| 11 | LED (green) | 2 | `Led` | Up / down direction arrows |
-| 12 | LED (red) | 1 | `Led` | Overload |
-| 13 | LED / motor | 1 | `DC Motor` | Hoist (PWM + direction) |
-| 14 | LED / motor | 1 | `DC Motor` | Door (PWM + direction) |
-| 15 | Switch (SPST, **NC**) | 1 | `Switch` | Emergency stop |
-| 16 | Switch (SPST) | 1 | `Switch` | Door safety edge / light curtain |
-| 17 | Buzzer | 1 | `Buzzer` | Arrival gong, alarms |
-| 18 | 16×2 LCD + PCF8574 | 1 | `Lcd` + `I2CToParallel` | Service display |
-| 19 | 25LC256 SPI EEPROM | 1 | `Memory (SPI)` | Statistics, config, fault log |
-| 20 | Serial terminal | 1 | `SerialPort` | Building-management console |
+| # | Component | Qty | Purpose |
+|---|-----------|:---:|---------|
+|1|ATmega32A|1|Main controller|
+|2|16×2 LCD|1|Service information display|
+|3|Potentiometer (Position)|1|Simulates elevator position|
+|4|Potentiometer (Load)|1|Simulates elevator load|
+|5|Potentiometer (Motor Current)|1|Simulates hoist motor current|
+|6|Potentiometer (Door Position)|1|Simulates door opening percentage|
+|7|Push Buttons|12|Hall calls, cabin calls, door open/close, emergency alarm|
+|8|Emergency Stop Switch (NC)|1|Stops elevator immediately|
+|9|Door Safety Edge Switch|1|Door obstruction detection|
+|10|Fire Service Switch|1|Activates fire recall mode|
+|11|L298N Motor Driver|1|Controls hoist and door motors|
+|12|DC Motor (Hoist)|1|Elevator movement simulation|
+|13|DC Motor (Door)|1|Door movement simulation|
+|14|Green LEDs|2|Travel direction indicators|
+|15|Red LED|1|Overload indication|
+|16|Buzzer|1|Arrival gong and fault alarms|
+
+---
 
 ---
 
@@ -133,52 +121,34 @@ in the system.
 | Car load | 39 | `PA1` / ADC1 | Analog in | 0 – 1023 → 0 – 1000 kg |
 | Hoist current | 38 | `PA2` / ADC2 | Analog in | 0 – 1023 → 0 – 20.0 A |
 | Door position | 37 | `PA3` / ADC3 | Analog in | 0 = closed, 100 = open |
-| Hoist UP | 1 | `PB0` | Out | H-bridge direction |
-| Hoist DOWN | 2 | `PB1` | Out | H-bridge direction |
-| Door OPEN | 3 | `PB2` | Out | Door motor direction |
-| Door CLOSE | 4 | `PB3` | Out | Door motor direction |
-| SPI `SS` — EEPROM | 5 | `PB4` | Out | Active low |
-| SPI `MOSI` | 6 | `PB5` | Out | Shared: EEPROM + 595 |
-| SPI `MISO` | 7 | `PB6` | In | Shared: EEPROM + **165** |
-| SPI `SCK` | 8 | `PB7` | Out | Shared by all three |
+| Hoist Motor IN1 | `PA4` / ADC4 | Output | Hoist direction A |
+| Hoist Motor IN2 | `PA5` / ADC5 | Output | Hoist direction B |
+| Door Motor IN3 | `PA6` / ADC6 | Output | Door direction A |
+| Door Motor IN4 | `PA7` / ADC7 | Output | Door direction B |
+| Car Call G | `PB0` | Input | |
+| Car Call 1 | `PB1` | Input | |
+| Car Call 2 | `PB2` | Input | |
+| Car Call 3 | `PB3` | Input | |
+| Door OPEN | `PB4` | Input | |
+| Door CLOSE | `PB5` | Input | |
+| Emergency Alarm | `PB6` | Input | |
+| Door Safety Edge | `PB7` | Input | |
 | I2C `SCL` | 22 | `PC0` | Out | 4.7 kΩ pull-up |
 | I2C `SDA` | 23 | `PC1` | Bidir | 4.7 kΩ pull-up |
-| 74HC165 `PL` (load) | 24 | `PC2` | Out | Active-low pulse before reading |
-| 74HC595 `RCLK` (latch) | 25 | `PC3` | Out | Rising edge latches |
-| UP arrow LED | 26 | `PC4` | Out | |
+| UP LED | `PC2` | Output | |
+| DOWN LED | `PC3` | Output | |
+| OVERLOAD LED | `PC4` | Output | |
 | DOWN arrow LED | 27 | `PC5` | Out | |
-| CPU-load test pin | 28 | `PC6` | Out | Timing measurement |
-| Overload LED | 29 | `PC7` | Out | Red |
-| USART `RXD` | 14 | `PD0` | In | 9600 8N1 |
-| USART `TXD` | 15 | `PD1` | Out | 9600 8N1 |
-| **Emergency stop** | 16 | `PD2` / INT0 | In, pull-up | **NC contact**, rising edge = trip |
-| Door safety edge | 17 | `PD3` / INT1 | In, pull-up | Falling edge = obstruction |
-| Door PWM | 18 | `PD4` / OC1B | PWM out | Door motor speed |
-| Hoist PWM | 19 | `PD5` / OC1A | PWM out | Hoist motor speed |
-| Fire-service switch | 20 | `PD6` | In, pull-up | Low = fire mode |
-| Buzzer / gong | 21 | `PD7` / OC2 | Out | Arrival chime, alarms |
+| USART `RXD` | 14 | `PC6` | In | 9600 8N1 |
+| USART `TXD` | 15 | `PC7` | Out | 9600 8N1 |
+| Hall UP – Ground | `PD0` | Input | |
+| Hall UP – Floor 1 | `PD1` | Input | |
+| Hall DOWN – Floor 1 | `PD2` | Input | |
+| Hall UP – Floor 2 | `PD3` | Input | |
+| Hall DOWN – Floor 2 | `PD4` | Input | |
+| Hall DOWN – Floor 3 | `PD5` | Input | |
+| Buzzer | PD7 | Output | Arrival gong & alarms |
 
-> `PC2` – `PC7` carry both shift-register strobes and the direction arrows:
-> **clear the `JTAGEN` fuse** or neither the buttons nor the floor display will
-> work.
-
-### 74HC165 input map (16 bits, first byte = bits 15…8)
-
-| Bit | Input | Bit | Input |
-|:---:|-------|:---:|-------|
-| 0 | Car call G | 8 | Hall UP G |
-| 1 | Car call 1 | 9 | Hall UP 1 |
-| 2 | Car call 2 | 10 | Hall DOWN 1 |
-| 3 | Car call 3 | 11 | Hall UP 2 |
-| 4 | Door OPEN button | 12 | Hall DOWN 2 |
-| 5 | Door CLOSE button | 13 | Hall DOWN 3 |
-| 6 | Emergency alarm button | 14 | spare |
-| 7 | Independent-service switch | 15 | spare |
-
-### Emergency stop wiring
-
-Identical to Project 06: a **normally closed** contact so a broken wire trips
-the elevator. Re-derive the argument in your own report; do not just cite it.
 
 ---
 
