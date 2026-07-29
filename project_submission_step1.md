@@ -40,157 +40,241 @@ system services.
 
 ---
 
-## Module 1: Peripheral Abstraction
+## Module 1 — Input & Display Hardware
 
-Responsible for configuring and accessing the ATmega32 hardware peripherals.
+**Files**
+```
+io.c
+io.h
+```
 
-### Responsibilities
+### Responsibility
+Reads operator inputs and controls all user interface devices.
 
-- GPIO configuration and digital I/O
-- ADC sampling and conversion
-- Timer initialization
-- PWM generation for hoist and door motors
-- External interrupt configuration (INT0, INT1)
-- LCD low-level interface
-- Buzzer control
+### Functions
 
-Provides low-level MCU services used by all higher-level modules.
+#### Buttons
+```c
+void Buttons_Init(void);
+void Buttons_Read(void);
+void Buttons_Debounce(void);
+uint8_t Button_GetEvent(uint8_t id);
+```
 
----
+#### LCD
+```c
+void LCD_Init(void);
+void LCD_Update(void);
+void LCD_ShowStatus(void);
+void LCD_ShowFault(void);
+```
 
-## Module 2: Input & Display
+#### LEDs
+```c
+void LED_UpdateDirection(void);
+void LED_UpdateOverload(void);
+```
 
-Responsible for reading user inputs and updating visual and audio indicators.
-
-### Responsibilities
-
-- Hall-call and car-call button acquisition
-- Door Open / Door Close buttons
-- Emergency Alarm and Emergency Stop inputs
-- Button debouncing and edge detection
-- Floor indicator LEDs
-- Direction LEDs (UP / DOWN)
-- Overload indicator LED
-- 16×2 LCD status display
-- Arrival gong and alarm buzzer
-
-Encapsulates all operator inputs and user interface devices.
-
----
-
-## Module 3: Position & Motion Control
-
-Responsible for elevator movement and door control.
-
-### Responsibilities
-
-- Car position measurement from ADC
-- Floor detection and position filtering
-- Motion profile generation
-- Hoist motor PWM control
-- Door motor PWM control
-- Automatic door open/close sequence
-- Levelling at the destination floor
-
-Manages all mechanical movement while ensuring smooth and accurate positioning.
+#### Buzzer
+```c
+void Gong_Up(void);
+void Gong_Down(void);
+void Alarm_Beep(void);
+```
 
 ---
 
-## Module 4: Dispatch & Call Management
+# Module 2 — Position & Motion Control
 
-Responsible for processing requests and selecting the next destination.
+**Files**
+```
+motion.c
+motion.h
+```
 
-### Responsibilities
+### Responsibility
+Controls elevator movement and door motion.
 
-- Button-to-call mapping
-- Hall and car call registration
-- Duplicate call suppression
-- LOOK dispatch algorithm
-- Direction selection
-- Automatic parking
-- Fire-service recall
-- Call rejection during Emergency Stop and Fire Service
+### Functions
 
-Determines where the elevator should travel next according to system requests.
+#### Position
+```c
+void Position_Update(void);
+uint16_t Position_GetCm(void);
+uint8_t Position_GetFloor(void);
+```
+
+#### Motion
+```c
+void Motion_Start(uint8_t floor);
+void Motion_Stop(void);
+void Motion_Update(void);
+void Motion_Profile(void);
+```
+
+#### Levelling
+```c
+void Leveling_Update(void);
+bool Leveling_Done(void);
+```
+
+#### Door
+```c
+void Door_Open(void);
+void Door_Close(void);
+void Door_Stop(void);
+void Door_Update(void);
+```
 
 ---
 
-## Module 5: Safety & Fault Handling
+# Module 3 — Dispatch & Call Management
 
-Responsible for monitoring unsafe conditions and protecting the system.
+**Files**
+```
+dispatch.c
+dispatch.h
+```
 
-### Responsibilities
+### Responsibility
+Processes requests and decides the next destination.
 
-- Emergency Stop handling (INT0)
-- Door safety edge monitoring (INT1)
-- Door obstruction recovery
-- Door timeout detection
-- Overload monitoring
-- Over-current monitoring
-- Position sensor fault detection
-- Over-travel protection
-- Travel timeout detection
-- Door-open-while-moving interlock
-- Fault management and fault logging
+### Functions
 
-Implements all safety functions and manages fault transitions.
+#### Calls
+```c
+void Calls_Register(uint8_t floor,uint8_t type);
+void Calls_Clear(uint8_t floor);
+bool Calls_Exist(void);
+```
+
+#### LOOK Algorithm
+```c
+void Dispatch_LOOK(void);
+uint8_t Dispatch_GetNextFloor(void);
+```
+
+#### Fire Service
+```c
+void FireService_Update(void);
+```
+
+#### Parking
+```c
+void Parking_Update(void);
+```
 
 ---
 
-## Module 6: System & Service Management
+# Module 4 — Safety & Fault Handling
 
-Responsible for coordinating all software modules and providing system services.
+**Files**
+```
+safety.c
+safety.h
+```
 
-### Responsibilities
+### Responsibility
+Monitors all safety conditions and handles faults.
 
-- System initialization
-- Main scheduler and task execution
-- LCD service pages
-- Statistics management
-- Trip counter
-- Door cycle counter
-- Console command processing
-- Telemetry transmission
-- Event logging
-- Diagnostic and maintenance functions
+### Functions
 
-Integrates all software modules into a complete elevator control application.
+#### Emergency
+```c
+void Emergency_Stop(void);
+void Emergency_Reset(void);
+```
 
-## 4. Developer Responsibilities
+#### Monitoring
+```c
+void Safety_CheckOverload(void);
+void Safety_CheckCurrent(void);
+void Safety_CheckPosition(void);
+void Safety_CheckDoor(void);
+void Safety_CheckTimeouts(void);
+```
+
+#### Faults
+```c
+void Fault_Set(uint8_t id);
+void Fault_Clear(uint8_t id);
+bool Fault_IsActive(void);
+```
+
+---
+
+# Module 5 — System, Telemetry & Persistence
+
+**Files**
+```
+system.c
+system.h
+```
+
+### Responsibility
+Coordinates the whole project.
+
+### Functions
+
+#### System
+```c
+void System_Init(void);
+void System_Update(void);
+```
+
+#### Scheduler
+```c
+void Scheduler_10ms(void);
+void Scheduler_20ms(void);
+void Scheduler_100ms(void);
+void Scheduler_250ms(void);
+void Scheduler_2s(void);
+```
+
+#### Console
+```c
+void Console_Process(void);
+void Console_Command(char *cmd);
+```
+
+#### Telemetry
+```c
+void Telemetry_Send(void);
+```
+
+#### Statistics
+```c
+void Statistics_Update(void);
+void LogFault(uint8_t fault);
+```
+
+---
+
+### 4. Developer Responsibilities
 
 ### Developer Function Table
 
-| Developer | Modules | Primary Functions |
+| Developer | Modules | Primary Responsibilities |
 | :--- | :--- | :--- |
-| **Developer 1** | Module 1: Peripheral Abstraction<br>Module 2: Input & Display Hardware | - MCU peripheral drivers<br>- SPI/I2C and ADC integration<br>- Button acquisition and debouncing<br>- Seven-segment and LCD display control<br>- Buzzer/tone generation and timing |
-| **Developer 2** | Module 3: Position & Motion Control<br>Module 4: Dispatch & Call Management<br>Module 5: Safety & Fault Handling<br>Module 6: Service, Telemetry & Persistence | - Motion profile and floor levelling<br>- LOOK dispatch and call bitmap logic<br>- Safety interrupts, overload, and fault handling<br>- Service console, telemetry, and persistent logging |
-
-### Developer 1(Ahmed): Hardware & Driver Implementation
-- Develop Module 1: Peripheral Abstraction
-- Develop Module 2: Input & Display Hardware
-- Manage SPI / I2C device timing and peripheral integration
-- Verify button acquisition, display refresh, and LCD frame timing
-
-### Developer 2 (Mohammed): Control Logic & Safety Integration
-- Develop Module 3: Position & Motion Control
-- Develop Module 4: Dispatch & Call Management
-- Develop Module 5: Safety & Fault Handling
-- Develop Module 6: Service, Telemetry & Persistence
-- Implement elevator state machines, LOOK algorithm, and fault responses
+| **Developer 1 (Ahmed)** | **Module 1:** Input & Display Hardware<br>**Module 5:** System, Telemetry & Persistence | Button acquisition, LCD, LEDs, buzzer, system initialization, scheduler, telemetry, console commands, statistics and logging. |
+| **Developer 2 (Mohammed)** | **Module 2:** Position & Motion Control<br>**Module 3:** Dispatch & Call Management<br>**Module 4:** Safety & Fault Handling | Motion control, floor detection, LOOK dispatch algorithm, call management, fire service, parking, safety monitoring, fault handling and emergency responses. |
 
 ---
 
-## 5. Shared Work
+### Developer 1 (Ahmed): User Interface & System Services
 
-- Define and document pin assignments, signal names, and shared data structures.
-- Agree on call bitmap layout, motion state variables, and fault/event message formats.
-- Co-design the serial command interface, LCD page content, and telemetry frame structure.
-- Perform joint integration testing for button acquisition, display refresh, motion profiling, and safety overrides.
-- Review each other’s code for timing-critical interactions and safety behavior.
+Responsible for all user interaction, display devices, communication services, and system coordination.
 
----
+#### Module 1 — Input & Display Hardware
 
-## 6. Collaboration Notes
+##### Buttons
+```c
+void Buttons_Init(void);
+void Buttons_Read(void);
+void Buttons_Debounce(void);
+uint8_t Button_GetEvent(uint8_t id);
+
+## 5. Collaboration Notes
 
 - Both developers agree on pin assignments, shared data structures, and call/position bitmaps.
 - Developer 1 provides stable hardware interfaces; Developer 2 consumes them in control logic.
