@@ -566,248 +566,29 @@ three adjacent pairs.
 
 ---
 
-## 13. Functional Requirements
-
-### FR-01 — Button acquisition via 74HC165
-
-The system **shall** read all sixteen buttons every **50 ms** through the
-chained 74HC165 pair.
-
-**Acceptance criteria**
-- `PL` is pulsed low for ≥ 1 µs before the first `SCK` edge.
-- Exactly 16 bits are clocked in; the mapping matches §7.
-- Each input is debounced for 50 ms and produces one edge event per press.
-- `PB4` (EEPROM select) is high throughout — verified on the scope.
-- A button held down does not repeatedly re-register a call.
-
-### FR-02 — Position measurement
-
-The system **shall** sample ADC0 every **20 ms** and publish the car position in
-centimetres.
-
-**Acceptance criteria**
-- `positionCm = raw × 1000 / 1023` with a `uint32_t` intermediate.
-- Median-of-3 filtered; resolution ≤ 1 cm.
-- `currentFloor` is the nearest floor from `floorCm[]`.
-- ADC0 pinned at 0 or 1023 for 2 s raises `FLT_POSITION_SENSOR` and stops the
-  car — a broken position sensor must never let the car keep moving.
-
-### FR-03 — Call registration
-
-Pressing any car or hall button **shall** set the corresponding bit in the
-matching bitmap.
-
-**Acceptance criteria**
-- A car call for the current floor with the door closed opens the door instead
-  of registering.
-- A hall call at the current floor in the current direction opens the door.
-- Duplicate presses do not stack or clear.
-- Registering a call is refused in fire service and while in `CS_ESTOP`.
-- The `CALLS?` command reports all three bitmaps in hex.
-
-### FR-04 — LOOK dispatch
-
-The next direction and each stop decision **shall** follow the LOOK algorithm of
-§9.2.
-
-**Acceptance criteria**
-- Travelling up, the car serves every up-call and car-call above it before
-  reversing.
-- Travelling up, it **does not** stop for a down-call at an intermediate floor
-  when a call exists above it.
-- Travelling up with no calls above, it **does** serve a down-call at the
-  highest called floor and then reverses.
-- With no calls, direction becomes `DIR_NONE` and the car is idle.
-- The scripted sequence of TC-27 produces exactly the documented stop order.
-
-### FR-05 — Trapezoidal motion profile
-
-The hoist **shall** follow the profile of §9.4.
-
-**Acceptance criteria**
-- Duty ramps 0 → full over 1 s at departure; no step change.
-- Duty drops to `slowDutyPct` at `slowZoneCm` from the target.
-- Duty drops to `creepDutyPct` at `creepZoneCm`.
-- Duty is 0 and the brake applied within `levelToleranceCm`.
-- The transitions are computed from the *remaining distance*, not from elapsed
-  time — a time-based profile fails as soon as the load changes.
-
-### FR-06 — Levelling accuracy
-
-The car **shall** stop within **±3 cm** of the target floor position from both
-directions.
-
-**Acceptance criteria**
-- Ten arrivals from above and ten from below, all within ±3 cm.
-- If the car overshoots the window, it re-levels at creep speed in the opposite
-  direction — but no more than **twice**, after which `FLT_LEVEL_FAIL` is raised.
-- The final position is reported in the arrival event.
-
-### FR-07 — Door sequence
-
-On arrival the door **shall** open, dwell, and close automatically.
-
-**Acceptance criteria**
-- Open and close are driven by `OC1B` with direction pins, never by a bare GPIO
-  toggle.
-- Dwell is `doorDwellSec` (5 s), extended to `doorHoldSec` (15 s) while the
-  Door-Open button is held.
-- The Door-Close button ends the dwell early.
-- `doorCycles` increments per full cycle and persists.
-- **The car cannot move until `doorPct == 0`.** Verified in TC-33.
-
-### FR-08 — Door obstruction reversal
-
-An obstruction detected on `INT1` while closing **shall** reverse the door to
-fully open.
-
-**Acceptance criteria**
-- Reversal begins within 20 ms of the edge.
-- The dwell restarts at `REOPEN_TICKS` (3 s).
-- **The close command can never win over the safety edge** — this is the single
-  most important door requirement.
-- Three consecutive reversals put the door in `DS_JAMMED`: door held open, gong
-  pattern, `FLT_DOOR_JAM` logged, car out of service until acknowledged.
-
-### FR-09 — Door travel timeout
-
-A door that does not reach its commanded end position within `doorTimeoutSec`
-(10 s) **shall** raise `FLT_DOOR_TIMEOUT`.
-
-**Acceptance criteria**
-- The door motor stops; the door is driven open as the fail-safe.
-- The car does not depart.
-- The fault is latched and logged.
-
-### FR-10 — Overload inhibition
-
-A load above `overloadKg` (900 kg) **shall** prevent departure.
-
-**Acceptance criteria**
-- The car does **not** move; the door is held open; the overload LED lights; the
-  buzzer sounds an intermittent tone.
-- The LCD shows `OVERLOAD 940kg`.
-- Existing calls are **retained**, not cancelled.
-- Reducing the load below 850 kg (hysteresis) resumes normal service within 1 s.
-- Overload never prevents the door from opening.
-
-### FR-11 — Emergency stop
-
-A rising edge on `INT0` **shall** stop everything within **1 ms**.
-
-**Acceptance criteria**
-- The ISR sets `OCR1A = 0`, `OCR1B = 0`, clears `PB0`…`PB3`, sets a flag.
-- Measured edge-to-PWM-low ≤ 1 ms.
-- Opening the E-stop wire trips identically to pressing the button (NC design).
-- `CS_ESTOP` is latched; recovery requires the contact closed **and** an
-  explicit reset.
-- All calls are cancelled on E-stop.
-
-### FR-12 — Over-travel protection
-
-A position outside −5 … 1005 cm **shall** raise `FLT_OVERTRAVEL`.
-
-**Acceptance criteria**
-- The hoist stops immediately.
-- The fault is latched with the position snapshot.
-- Recovery requires an acknowledgement and a manual `HOME` command.
-
-### FR-13 — Travel timeout
-
-Failing to reach the target within `travelTimeoutSec` (30 s) **shall** raise
-`FLT_TRAVEL_TIMEOUT`.
-
-**Acceptance criteria**
-- Catches a jammed car, a slipping rope or a failed motor.
-- The hoist stops; the fault latches; the door is **not** opened between floors.
-
-### FR-14 — Hoist over-current
-
-Hoist current above `hoistOverCurrentmA` (15.0 A) for 500 ms **shall** raise
-`FLT_OVERCURRENT`.
-
-**Acceptance criteria**
-- A 200 ms inrush spike at departure does **not** trip.
-- A sustained overload trips within 600 ms.
-
-### FR-15 — Door-open-while-moving interlock
-
-If `doorPct > 5` while the hoist duty is non-zero, the system **shall** stop
-immediately and latch a fault.
-
-**Acceptance criteria**
-- Checked every 10 ms.
-- This condition should be unreachable by design — the requirement exists as a
-  belt-and-braces check. Your report must explain why a defensive check for an
-  "impossible" state is good practice in safety software.
-
-### FR-16 — Fire service recall
-
-Closing the fire-service switch **shall** cancel every call and recall the car
-to `fireFloor`.
-
-**Acceptance criteria**
-- All three call bitmaps are cleared immediately.
-- The car finishes levelling at the nearest floor if moving away, then travels
-  to the fire floor.
-- On arrival the door opens and is **held open** indefinitely.
-- No hall or car call is accepted while fire service is active.
-- The LCD shows `FIRE SERVICE`; `!EVT,FIRE,RECALL` is logged.
-- Fire service outranks overload and the normal dispatch, but **not** the
-  emergency stop.
-
-### FR-17 — Automatic parking
-
-After `parkDelaySec` (300 s) idle away from the home floor, the car **shall**
-return to `homeFloor`.
-
-**Acceptance criteria**
-- The timer resets on any call.
-- Parking is abandoned instantly if a call arrives mid-journey — the new call is
-  served first.
-- Parking is disabled in fire service and while faulted.
-
-### FR-18 — Floor display and arrival gong
-
-The 74HC595 **shall** show the current floor; the arrows **shall** show travel
-direction; a gong **shall** sound on arrival.
-
-**Acceptance criteria**
-- The display refreshes every 100 ms with no flicker.
-- The digit shows the floor being *approached* once past the slowdown point, not
-  the floor left behind.
-- The gong is one tone on an up-arrival, two on a down-arrival (a real
-  convention).
-- `PB4` is high while the 595 is clocked.
-
-### FR-19 — LCD service display
-
-The LCD **shall** refresh every **250 ms**:
-
-```
-Line 1: FL2 ^  P:612cm
-Line 2: LD:420 D:0 MOV
-```
-
-**Acceptance criteria**
-- Second page (console `PAGE 1`) shows call bitmaps, trip count and door cycles.
-- Faults replace line 2 with `!FLT DOOR TIMEOUT` alternating every 1.5 s.
-- Only changed characters are rewritten.
-
-### FR-20 — Statistics and fault log
-
-The system **shall** persist trip count, door cycles and a 16-entry fault ring.
-
-**Acceptance criteria**
-- Counters written every 10 trips or every 5 min, whichever comes first.
-- Fault records are written immediately on the fault.
-- `TRIPS?` and `FAULTS?` dump them.
-- All survive a power cycle.
-
-### FR-21 — Telemetry and console
-
-The system **shall** transmit the frame of §18.1 every **2 s** and accept the
-commands of §18.2.
+## 13. | Functional Requirement | Responsible Module |
+|------------------------|--------------------|
+| FR-01 Button Acquisition | Input & Display |
+| FR-02 Position Measurement | Motion Control |
+| FR-03 Call Registration | Dispatch |
+| FR-04 LOOK Dispatch | Dispatch |
+| FR-05 Motion Profile | Motion Control |
+| FR-06 Levelling | Motion Control |
+| FR-07 Door Control | Motion Control |
+| FR-08 Door Safety | Safety |
+| FR-09 Door Timeout | Safety |
+| FR-10 Overload Protection | Safety |
+| FR-11 Emergency Stop | Safety |
+| FR-12 Over-Travel Protection | Safety |
+| FR-13 Travel Timeout | Safety |
+| FR-14 Over-Current Protection | Safety |
+| FR-15 Door Interlock | Safety |
+| FR-16 Fire Service | Dispatch |
+| FR-17 Automatic Parking | Dispatch |
+| FR-18 Indicators & LEDs | Input & Display |
+| FR-19 LCD Service Display | Input & Display |
+| FR-20 Statistics & Fault Handling | System |
+| FR-21 Console & Telemetry | System |
 
 **Acceptance criteria**
 - `CALL <floor> <UP|DOWN|CAR>` injects a call, so the whole test plan can be
