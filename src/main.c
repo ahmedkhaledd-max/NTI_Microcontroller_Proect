@@ -1,7 +1,7 @@
 #include "../Service/STD_Types.h"
-#include "../App/elevator_dispatch.h"
-#include "../App/elevator_motion.h"
-#include "../App/elevator_safety.h"
+#include "../LOGIC/elevator_dispatch.h"
+#include "../LOGIC/elevator_motion.h"
+#include "../LOGIC/elevator_safety.h"
 
 #define DEMO_REQUEST_PERIOD 5000u
 #define DOOR_OPEN_TIME      200u
