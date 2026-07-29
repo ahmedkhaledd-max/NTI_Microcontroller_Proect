@@ -316,23 +316,25 @@ Floors are at 0, 300, 600 and 900 cm. Levelling accuracy must be ±3 cm from
 **both** directions — the asymmetry caused by gravity assisting a downward move
 is the interesting part.
 
-### 9.5 Module responsibilities
-
-| Module | Owns | Public API (suggested) |
+| Module | Owns | Public API (Suggested) |
 |--------|------|------------------------|
-| `car_fsm` | Elevator state, sequencing | `FSM_Init`, `FSM_Run`, `FSM_GetState` |
-| `dispatch` | Call bitmaps, LOOK decision | `DSP_AddCall`, `DSP_ClearFloor`, `DSP_NextDirection`, `DSP_ShouldStop` |
-| `motion` | Speed profile, levelling | `MOT_GoTo`, `MOT_Step`, `MOT_AtTarget`, `MOT_Stop` |
-| `door_fsm` | Door open/close/reverse, dwell | `DOR_Open`, `DOR_Close`, `DOR_Run`, `DOR_IsClosed` |
-| `safety` | E-stop, overload, overtravel, current | `SAF_Evaluate`, `SAF_Active` |
-| `calls165` | 16-bit button read + debounce + edges | `BTN_Scan`, `BTN_Pressed(n)` |
-| `seg595` | Floor digit + direction | `SEG_Show(floor, dir)` |
-| `position` | ADC → cm, floor detection | `POS_Cm`, `POS_NearestFloor`, `POS_InLevelZone` |
-| `hoist` | **Only** writer of `OC1A` and hoist direction | `HST_SetDuty`, `HST_SetDir`, `HST_Brake` |
-| `door` | **Only** writer of `OC1B` and door direction | `DRV_SetDuty`, `DRV_SetDir` |
-| `faultlog` | 16-entry ring in EEPROM | `FLG_Append`, `FLG_Dump` |
+| `io` | Buttons, LCD, LEDs, buzzer, operator interface | `Buttons_Init`, `Buttons_Read`, `Buttons_Debounce`, `Button_GetEvent`, `LCD_Init`, `LCD_Update`, `LCD_ShowStatus`, `LCD_ShowFault`, `LED_UpdateDirection`, `LED_UpdateOverload`, `Gong_Up`, `Gong_Down`, `Alarm_Beep` |
+| `motion` | Position measurement, hoist motion, motion profile, levelling, door control | `Position_Update`, `Position_GetCm`, `Position_GetFloor`, `Motion_Start`, `Motion_Stop`, `Motion_Update`, `Motion_Profile`, `Leveling_Update`, `Leveling_Done`, `Door_Open`, `Door_Close`, `Door_Stop`, `Door_Update` |
+| `dispatch` | Call bitmaps, LOOK dispatch algorithm, fire service, automatic parking | `Calls_Register`, `Calls_Clear`, `Calls_Exist`, `Dispatch_LOOK`, `Dispatch_GetNextFloor`, `FireService_Update`, `Parking_Update` |
+| `safety` | Emergency stop, overload, over-current, over-travel, door safety, timeout monitoring, fault management | `Emergency_Stop`, `Emergency_Reset`, `Safety_CheckOverload`, `Safety_CheckCurrent`, `Safety_CheckPosition`, `Safety_CheckDoor`, `Safety_CheckTimeouts`, `Fault_Set`, `Fault_Clear`, `Fault_IsActive` |
+| `system` | System initialization, scheduler, telemetry, console commands, statistics, fault logging, EEPROM persistence | `System_Init`, `System_Update`, `Scheduler_10ms`, `Scheduler_20ms`, `Scheduler_100ms`, `Scheduler_250ms`, `Scheduler_2s`, `Console_Process`, `Console_Command`, `Telemetry_Send`, `Statistics_Update`, `LogFault` |
+---
+### 9.6 Developer Responsibilities
 
-### 9.6 Concurrency contract
+### Developer Function Table
+
+| Developer | Modules | Primary Responsibilities |
+| :--- | :--- | :--- |
+| **Developer 1 (Ahmed)** | **Module 1:** Input & Display Hardware<br>**Module 5:** System, Telemetry & Persistence | Button acquisition, LCD, LEDs, buzzer, system initialization, scheduler, telemetry, console commands, statistics and logging. |
+| **Developer 2 (Mohammed)** | **Module 2:** Position & Motion Control<br>**Module 3:** Dispatch & Call Management<br>**Module 4:** Safety & Fault Handling | Motion control, floor detection, LOOK dispatch algorithm, call management, fire service, parking, safety monitoring, fault handling and emergency responses. |
+
+---
+### 9.7 Concurrency contract
 
 - `ISR(INT0_vect)` — E-stop — clears `OCR1A`, `OCR1B` and all four direction
   pins, then sets a flag. Documented layer-rule exception.

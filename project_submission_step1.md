@@ -84,7 +84,7 @@ void Alarm_Beep(void);
 
 ---
 
-# Module 2 — Position & Motion Control
+## Module 2 — Position & Motion Control
 
 **Files**
 ```
@@ -128,7 +128,7 @@ void Door_Update(void);
 
 ---
 
-# Module 3 — Dispatch & Call Management
+## Module 3 — Dispatch & Call Management
 
 **Files**
 ```
@@ -166,7 +166,7 @@ void Parking_Update(void);
 
 ---
 
-# Module 4 — Safety & Fault Handling
+## Module 4 — Safety & Fault Handling
 
 **Files**
 ```
@@ -203,7 +203,7 @@ bool Fault_IsActive(void);
 
 ---
 
-# Module 5 — System, Telemetry & Persistence
+## Module 5 — System, Telemetry & Persistence
 
 **Files**
 ```
