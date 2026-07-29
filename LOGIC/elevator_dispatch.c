@@ -1,80 +1,136 @@
 #include "elevator_dispatch.h"
 
-// بتات لتسجيل الطلبات (كل بيت يمثل دور من 0 إلى 3)
-static u8 car_calls_bitmap = 0;   // طلبات من داخل الكابينة
-static u8 up_calls_bitmap = 0;    // طلبات صعود من الأدوار
-static u8 down_calls_bitmap = 0;  // طلبات هبوط من الأدوار
+static u8 car_calls_bitmap = 0;
+static u8 up_calls_bitmap = 0;
+static u8 down_calls_bitmap = 0;
+static u8 current_direction = DIR_STOP;
+static u8 current_floor = 0u;
 
-void Elevator_Dispatch_Init(void) {
-    car_calls_bitmap = 0;
-    up_calls_bitmap = 0;
-    down_calls_bitmap = 0;
+static void Dispatch_BitSet(u8 floor, u8 *bitmap)
+{
+    if (floor < TOTAL_FLOORS)
+    {
+        *bitmap |= (u8)(1u << floor);
+    }
 }
 
-void Elevator_AddCall(u8 floor, u8 is_car_call) {
-    if (floor >= TOTAL_FLOORS) return;
+static void Dispatch_BitClear(u8 floor, u8 *bitmap)
+{
+    if (floor < TOTAL_FLOORS)
+    {
+        *bitmap &= (u8)~(1u << floor);
+    }
+}
 
-    if (is_car_call) {
-        car_calls_bitmap |= (1 << floor);
+void Dispatch_Init(void)
+{
+    car_calls_bitmap = 0u;
+    up_calls_bitmap = 0u;
+    down_calls_bitmap = 0u;
+    current_direction = DIR_STOP;
+    current_floor = 0u;
+}
+
+void Dispatch_Update(void)
+{
+    (void)current_floor;
+}
+
+void Call_Register(uint8_t floor, uint8_t type)
+{
+    if (floor >= TOTAL_FLOORS) {
+        return;
+    }
+
+    if (type == CALL_TYPE_CAR) {
+        Dispatch_BitSet(floor, &car_calls_bitmap);
     } else {
-        // الدور مش الأخير يبقي ممكن طلب صعود، لو مش الأول يبقي هبوط (كمثال مبسط)
-        if (floor < TOTAL_FLOORS - 1) {
-            up_calls_bitmap |= (1 << floor);
+        if (floor < (TOTAL_FLOORS - 1u)) {
+            Dispatch_BitSet(floor, &up_calls_bitmap);
         }
-        if (floor > 0) {
-            down_calls_bitmap |= (1 << floor);
+        if (floor > 0u) {
+            Dispatch_BitSet(floor, &down_calls_bitmap);
         }
     }
 }
 
-void Elevator_ClearCall(u8 floor) {
-    if (floor >= TOTAL_FLOORS) return;
-    car_calls_bitmap &= ~(1 << floor);
-    up_calls_bitmap &= ~(1 << floor);
-    down_calls_bitmap &= ~(1 << floor);
+void Call_Clear(uint8_t floor)
+{
+    if (floor >= TOTAL_FLOORS) {
+        return;
+    }
+
+    Dispatch_BitClear(floor, &car_calls_bitmap);
+    Dispatch_BitClear(floor, &up_calls_bitmap);
+    Dispatch_BitClear(floor, &down_calls_bitmap);
 }
 
-// تطبيق خوارزمية LOOK المخصصة
-u8 Elevator_CalculateNextFloor(u8 current_floor, ElevatorDirection_t *current_dir) {
-    u8 total_requests = car_calls_bitmap | up_calls_bitmap | down_calls_bitmap;
-    
-    // لو مفيش أي طلبات، الأسانسير يقف
-    if (total_requests == 0) {
-        *current_dir = DIR_STOP;
+uint8_t Dispatch_GetNextFloor(void)
+{
+    u8 total_requests = (u8)(car_calls_bitmap | up_calls_bitmap | down_calls_bitmap);
+
+    if (total_requests == 0u) {
+        current_direction = DIR_STOP;
         return current_floor;
     }
 
-    // لو الاتجاه صاعد (UP)
-    if (*current_dir == DIR_UP || *current_dir == DIR_STOP) {
-        // دور هل فيه طلبات فوق الدور الحالي في نفس الاتجاه
-        for (u8 i = current_floor + 1; i < TOTAL_FLOORS; i++) {
-            if (total_requests & (1 << i)) {
-                *current_dir = DIR_UP;
-                return i;
+    if ((current_direction == DIR_UP) || (current_direction == DIR_STOP)) {
+        for (u8 i = (u8)(current_floor + 1u); i < TOTAL_FLOORS; i++) {
+            if (total_requests & (1u << i)) {
+                current_direction = DIR_UP;
+                current_floor = i;
+                return current_floor;
             }
         }
-        // لو مفيش فوق، اعكس الاتجاه وادور تحت
-        *current_dir = DIR_DOWN;
+        current_direction = DIR_DOWN;
     }
 
-    // لو الاتجاه هابط (DOWN)
-    if (*current_dir == DIR_DOWN) {
-        // دور هل فيه طلبات تحت الدور الحالي باستخدام int لتوافق الأنواع
-        for (int i = (int)current_floor - 1; i >= 0; i--) {
-            if (total_requests & (1 << i)) {
-                *current_dir = DIR_DOWN;
-                return (u8)i;
+    if (current_direction == DIR_DOWN) {
+        for (s8 i = (s8)current_floor - 1; i >= 0; i--) {
+            if (total_requests & (1u << (u8)i)) {
+                current_direction = DIR_DOWN;
+                current_floor = (u8)i;
+                return current_floor;
             }
         }
-        // لو مفيش تحت، اعكس الاتجاه وادور فوق
-        *current_dir = DIR_UP;
-        for (u8 i = current_floor + 1; i < TOTAL_FLOORS; i++) {
-            if (total_requests & (1 << i)) {
-                *current_dir = DIR_UP;
-                return i;
+
+        current_direction = DIR_UP;
+        for (u8 i = (u8)(current_floor + 1u); i < TOTAL_FLOORS; i++) {
+            if (total_requests & (1u << i)) {
+                current_direction = DIR_UP;
+                current_floor = i;
+                return current_floor;
             }
         }
     }
 
     return current_floor;
+}
+
+void Elevator_Dispatch_Init(void)
+{
+    Dispatch_Init();
+}
+
+void Elevator_AddCall(u8 floor, u8 is_car_call)
+{
+    Call_Register(floor, is_car_call ? CALL_TYPE_CAR : CALL_TYPE_FLOOR);
+}
+
+void Elevator_ClearCall(u8 floor)
+{
+    Call_Clear(floor);
+}
+
+u8 Elevator_CalculateNextFloor(u8 current_floor_in, ElevatorDirection_t *current_dir)
+{
+    if (current_dir != NULL) {
+        current_direction = (u8)*current_dir;
+    }
+    current_floor = current_floor_in;
+    u8 next_floor = Dispatch_GetNextFloor();
+    if (current_dir != NULL) {
+        *current_dir = (ElevatorDirection_t)current_direction;
+    }
+    return next_floor;
 }

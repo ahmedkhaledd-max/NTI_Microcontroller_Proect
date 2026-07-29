@@ -2,26 +2,31 @@
 #define ELEVATOR_SAFETY_H
 
 #include "../Service/STD_Types.h"
+#include <stdbool.h>
 
-// أنواع الأخطاء وحالات الأمان
+#define FAULT_EMERGENCY_STOP   1u
+#define FAULT_DOOR_OBSTRUCTION 2u
+#define FAULT_OVERLOAD         3u
+#define FAULT_TIMEOUT          4u
+
 typedef enum {
     FAULT_NONE = 0,
-    FAULT_EMERGENCY_STOP,
-    FAULT_DOOR_OBSTRUCTION,
-    FAULT_OVERLOAD,
-    FAULT_TIMEOUT
+    FAULT_EMERGENCY_STOP_ID,
+    FAULT_DOOR_OBSTRUCTION_ID,
+    FAULT_OVERLOAD_ID,
+    FAULT_TIMEOUT_ID
 } FaultType_t;
 
-// تهيئة حساسات الأمان والمقاطعات
+void Safety_Init(void);
+void Safety_Update(void);
+void Emergency_Stop(void);
+void Fault_Set(uint8_t id);
+void Fault_Clear(uint8_t id);
+bool Fault_IsActive(void);
+
 void Elevator_Safety_Init(void);
-
-// فحص حالات الأمان (زيادة الحمولة، عوائق الأبواب، زر الطوارئ)
 FaultType_t Elevator_CheckFaults(void);
-
-// تسجيل الخطأ في ذاكرة النظام أو الـ Ring Buffer
 void Elevator_LogFault(FaultType_t fault);
-
-// إرسال تقرير حالة النظام والـ Telemetry عبر السيريال كل فترة
 void Elevator_SendTelemetry(void);
 
 #endif
