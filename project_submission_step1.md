@@ -33,53 +33,39 @@ This project implements a four-floor elevator controller using an ATmega32A MCU.
 
 ## 3. # Project Modules
 
-The software is divided into six independent modules. Each module has a single
+The software is divided into five independent modules. Each module has a single
 responsibility, enabling parallel development, easier testing, and clear
 separation between hardware drivers, control algorithms, safety logic, and
 system services.
 
 ---
 
+# Project Modules
+
+---
+
 ## Module 1 — Input & Display Hardware
 
 **Files**
-```
-io.c
-io.h
+```text
+elevator_io.c
+elevator_io.h
 ```
 
 ### Responsibility
-Reads operator inputs and controls all user interface devices.
+Handles all user inputs and visual/audio outputs.
 
-### Functions
+### Public Functions
 
-#### Buttons
 ```c
-void Buttons_Init(void);
-void Buttons_Read(void);
-void Buttons_Debounce(void);
-uint8_t Button_GetEvent(uint8_t id);
-```
+void IO_Init(void);
+void IO_Update(void);
+uint8_t IO_GetButtonEvent(uint8_t id);
 
-#### LCD
-```c
-void LCD_Init(void);
-void LCD_Update(void);
 void LCD_ShowStatus(void);
 void LCD_ShowFault(void);
-```
 
-#### LEDs
-```c
-void LED_UpdateDirection(void);
-void LED_UpdateOverload(void);
-```
-
-#### Buzzer
-```c
-void Gong_Up(void);
-void Gong_Down(void);
-void Alarm_Beep(void);
+void Gong_Play(uint8_t type);
 ```
 
 ---
@@ -87,43 +73,28 @@ void Alarm_Beep(void);
 ## Module 2 — Position & Motion Control
 
 **Files**
-```
-motion.c
-motion.h
+```text
+elevator_motion.c
+elevator_motion.h
 ```
 
 ### Responsibility
-Controls elevator movement and door motion.
+Controls elevator movement, position measurement, levelling, and door operation.
 
-### Functions
+### Public Functions
 
-#### Position
 ```c
-void Position_Update(void);
-uint16_t Position_GetCm(void);
-uint8_t Position_GetFloor(void);
-```
-
-#### Motion
-```c
-void Motion_Start(uint8_t floor);
-void Motion_Stop(void);
+void Motion_Init(void);
 void Motion_Update(void);
-void Motion_Profile(void);
-```
 
-#### Levelling
-```c
-void Leveling_Update(void);
-bool Leveling_Done(void);
-```
+void Motion_GoToFloor(uint8_t floor);
+void Motion_Stop(void);
 
-#### Door
-```c
+uint16_t Motion_GetPosition(void);
+uint8_t Motion_GetFloor(void);
+
 void Door_Open(void);
 void Door_Close(void);
-void Door_Stop(void);
-void Door_Update(void);
 ```
 
 ---
@@ -131,37 +102,24 @@ void Door_Update(void);
 ## Module 3 — Dispatch & Call Management
 
 **Files**
-```
-dispatch.c
-dispatch.h
+```text
+elevator_dispatch.c
+elevator_dispatch.h
 ```
 
 ### Responsibility
-Processes requests and decides the next destination.
+Processes elevator requests and determines the next destination.
 
-### Functions
+### Public Functions
 
-#### Calls
 ```c
-void Calls_Register(uint8_t floor,uint8_t type);
-void Calls_Clear(uint8_t floor);
-bool Calls_Exist(void);
-```
+void Dispatch_Init(void);
+void Dispatch_Update(void);
 
-#### LOOK Algorithm
-```c
-void Dispatch_LOOK(void);
+void Call_Register(uint8_t floor, uint8_t type);
+void Call_Clear(uint8_t floor);
+
 uint8_t Dispatch_GetNextFloor(void);
-```
-
-#### Fire Service
-```c
-void FireService_Update(void);
-```
-
-#### Parking
-```c
-void Parking_Update(void);
 ```
 
 ---
@@ -169,33 +127,22 @@ void Parking_Update(void);
 ## Module 4 — Safety & Fault Handling
 
 **Files**
-```
-safety.c
-safety.h
+```text
+elevator_safety.c
+elevator_safety.h
 ```
 
 ### Responsibility
-Monitors all safety conditions and handles faults.
+Monitors safety conditions and manages system faults.
 
-### Functions
+### Public Functions
 
-#### Emergency
 ```c
+void Safety_Init(void);
+void Safety_Update(void);
+
 void Emergency_Stop(void);
-void Emergency_Reset(void);
-```
 
-#### Monitoring
-```c
-void Safety_CheckOverload(void);
-void Safety_CheckCurrent(void);
-void Safety_CheckPosition(void);
-void Safety_CheckDoor(void);
-void Safety_CheckTimeouts(void);
-```
-
-#### Faults
-```c
 void Fault_Set(uint8_t id);
 void Fault_Clear(uint8_t id);
 bool Fault_IsActive(void);
@@ -206,49 +153,26 @@ bool Fault_IsActive(void);
 ## Module 5 — System, Telemetry & Persistence
 
 **Files**
-```
-system.c
-system.h
+```text
+elevator_system.c
+elevator_system.h
 ```
 
 ### Responsibility
-Coordinates the whole project.
+Coordinates all modules, scheduling, telemetry, and persistent storage.
 
-### Functions
+### Public Functions
 
-#### System
 ```c
 void System_Init(void);
 void System_Update(void);
-```
 
-#### Scheduler
-```c
-void Scheduler_10ms(void);
-void Scheduler_20ms(void);
-void Scheduler_100ms(void);
-void Scheduler_250ms(void);
-void Scheduler_2s(void);
-```
-
-#### Console
-```c
 void Console_Process(void);
-void Console_Command(char *cmd);
-```
-
-#### Telemetry
-```c
 void Telemetry_Send(void);
-```
 
-#### Statistics
-```c
-void Statistics_Update(void);
+void Statistics_Save(void);
 void LogFault(uint8_t fault);
 ```
-
----
 
 ### 4. Developer Responsibilities
 
