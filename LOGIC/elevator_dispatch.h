@@ -25,9 +25,9 @@ typedef enum {
 
 void Dispatch_Init(void);
 void Dispatch_Update(void);
-void Call_Register(uint8_t floor, uint8_t type);
-void Call_Clear(uint8_t floor);
-uint8_t Dispatch_GetNextFloor(void);
+void Call_Register(uint8_h floor, uint8_h type);
+void Call_Clear(uint8_h floor);
+uint8_h Dispatch_GetNextFloor(void);
 
 void Elevator_Dispatch_Init(void);
 void Elevator_AddCall(u8 floor, u8 is_car_call);

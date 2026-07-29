@@ -36,7 +36,7 @@ void Dispatch_Update(void)
     (void)current_floor;
 }
 
-void Call_Register(uint8_t floor, uint8_t type)
+void Call_Register(uint8_h floor, uint8_h type)
 {
     if (floor >= TOTAL_FLOORS) {
         return;
@@ -54,7 +54,7 @@ void Call_Register(uint8_t floor, uint8_t type)
     }
 }
 
-void Call_Clear(uint8_t floor)
+void Call_Clear(uint8_h floor)
 {
     if (floor >= TOTAL_FLOORS) {
         return;
@@ -65,7 +65,7 @@ void Call_Clear(uint8_t floor)
     Dispatch_BitClear(floor, &down_calls_bitmap);
 }
 
-uint8_t Dispatch_GetNextFloor(void)
+uint8_h Dispatch_GetNextFloor(void)
 {
     u8 total_requests = (u8)(car_calls_bitmap | up_calls_bitmap | down_calls_bitmap);
 

@@ -2,7 +2,7 @@
 #include "elevator_dispatch.h"
 #include "elevator_safety.h"
 
-static uint8_t system_fault_counter = 0u;
+static uint8_h system_fault_counter = 0u;
 
 void System_Init(void)
 {
@@ -32,7 +32,7 @@ void Statistics_Save(void)
     (void)0;
 }
 
-void LogFault(uint8_t fault)
+void LogFault(uint8_h fault)
 {
     if (fault != 0u) {
         system_fault_counter++;

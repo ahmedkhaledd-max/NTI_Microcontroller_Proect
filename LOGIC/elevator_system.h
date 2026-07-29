@@ -9,6 +9,6 @@ void System_Update(void);
 void Console_Process(void);
 void Telemetry_Send(void);
 void Statistics_Save(void);
-void LogFault(uint8_t fault);
+void LogFault(uint8_h fault);
 
 #endif

@@ -20,8 +20,8 @@ typedef enum {
 void Safety_Init(void);
 void Safety_Update(void);
 void Emergency_Stop(void);
-void Fault_Set(uint8_t id);
-void Fault_Clear(uint8_t id);
+void Fault_Set(uint8_h id);
+void Fault_Clear(uint8_h id);
 bool Fault_IsActive(void);
 
 void Elevator_Safety_Init(void);
