@@ -11,6 +11,7 @@ LDFLAGS = -mmcu=atmega32
 # Auto-discover sources
 C_SOURCES := \
     $(wildcard src/*.c) \
+    $(wildcard App/*.c) \
     $(wildcard MCL/*.c) \
     $(wildcard MCL/*/*.c) \
     $(wildcard MCL/*/*/*.c) \
