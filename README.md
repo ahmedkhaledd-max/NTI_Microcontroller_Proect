@@ -121,33 +121,33 @@ This modular structure simplifies maintenance, testing, and future expansion.
 | Car load | 39 | `PA1` / ADC1 | Analog in | 0 – 1023 → 0 – 1000 kg |
 | Hoist current | 38 | `PA2` / ADC2 | Analog in | 0 – 1023 → 0 – 20.0 A |
 | Door position | 37 | `PA3` / ADC3 | Analog in | 0 = closed, 100 = open |
-| Hoist Motor IN1 | `PA4` / ADC4 | Output | Hoist direction A |
-| Hoist Motor IN2 | `PA5` / ADC5 | Output | Hoist direction B |
-| Door Motor IN3 | `PA6` / ADC6 | Output | Door direction A |
-| Door Motor IN4 | `PA7` / ADC7 | Output | Door direction B |
-| Car Call G | `PB0` | Input | |
-| Car Call 1 | `PB1` | Input | |
-| Car Call 2 | `PB2` | Input | |
-| Car Call 3 | `PB3` | Input | |
-| Door OPEN | `PB4` | Input | |
-| Door CLOSE | `PB5` | Input | |
-| Emergency Alarm | `PB6` | Input | |
-| Door Safety Edge | `PB7` | Input | |
+| Hoist Motor IN1 | 36 | `PA4` / ADC4 | Output | Hoist direction A |
+| Hoist Motor IN2 | 35 | `PA5` / ADC5 | Output | Hoist direction B |
+| Door Motor IN3 | 34 | `PA6` / ADC6 | Output | Door direction A |
+| Door Motor IN4 | 33 | `PA7` / ADC7 | Output | Door direction B |
+| Car Call G | 1 | `PB0` | Input | |
+| Car Call 1 | 2 | `PB1` | Input | |
+| Car Call 2 | 3 | `PB2` | Input | |
+| Car Call 3 | 4 | `PB3` | Input | |
+| Door OPEN | 5 | `PB4` | Input | |
+| Door CLOSE | 6 | `PB5` | Input | |
+| Emergency Alarm | 7 | `PB6` | Input | |
+| Door Safety Edge | 8 | `PB7` | Input | |
 | I2C `SCL` | 22 | `PC0` | Out | 4.7 kΩ pull-up |
 | I2C `SDA` | 23 | `PC1` | Bidir | 4.7 kΩ pull-up |
-| UP LED | `PC2` | Output | |
-| DOWN LED | `PC3` | Output | |
-| OVERLOAD LED | `PC4` | Output | |
+| UP LED | 24 | `PC2` | Output | |
+| DOWN LED | 25 | `PC3` | Output | |
+| OVERLOAD LED | 26 | `PC4` | Output | |
 | DOWN arrow LED | 27 | `PC5` | Out | |
-| USART `RXD` | 14 | `PC6` | In | 9600 8N1 |
-| USART `TXD` | 15 | `PC7` | Out | 9600 8N1 |
-| Hall UP – Ground | `PD0` | Input | |
-| Hall UP – Floor 1 | `PD1` | Input | |
-| Hall DOWN – Floor 1 | `PD2` | Input | |
-| Hall UP – Floor 2 | `PD3` | Input | |
-| Hall DOWN – Floor 2 | `PD4` | Input | |
-| Hall DOWN – Floor 3 | `PD5` | Input | |
-| Buzzer | PD7 | Output | Arrival gong & alarms |
+| USART `RXD` | 28 | `PC6` | In | 9600 8N1 |
+| USART `TXD` | 29 | `PC7` | Out | 9600 8N1 |
+| Hall UP – Ground | 14 | `PD0` | Input | |
+| Hall UP – Floor 1 | 15 | `PD1` | Input | |
+| Hall DOWN – Floor 1 | 16 | `PD2` | Input | |
+| Hall UP – Floor 2 | 17 | `PD3` | Input | |
+| Hall DOWN – Floor 2 | 18 | `PD4` | Input | |
+| Hall DOWN – Floor 3 | 19 | `PD5` | Input | |
+| Buzzer | 21 | `PD7` | Output | Arrival gong & alarms |
 
 
 ---
