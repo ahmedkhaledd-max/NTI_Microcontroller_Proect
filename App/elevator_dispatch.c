@@ -17,7 +17,7 @@ void Elevator_AddCall(u8 floor, u8 is_car_call) {
     if (is_car_call) {
         car_calls_bitmap |= (1 << floor);
     } else {
-        // لو الدور مش الأخير يبقي ممكن طلب صعود، لو مش الأول يبقي هبوط (كمثال مبسط)
+        // الدور مش الأخير يبقي ممكن طلب صعود، لو مش الأول يبقي هبوط (كمثال مبسط)
         if (floor < TOTAL_FLOORS - 1) {
             up_calls_bitmap |= (1 << floor);
         }
@@ -59,8 +59,8 @@ u8 Elevator_CalculateNextFloor(u8 current_floor, ElevatorDirection_t *current_di
 
     // لو الاتجاه هابط (DOWN)
     if (*current_dir == DIR_DOWN) {
-        // دور هل فيه طلبات تحت الدور الحالي
-        for (s8 i = (s8)current_floor - 1; i >= 0; i--) {
+        // دور هل فيه طلبات تحت الدور الحالي باستخدام int لتوافق الأنواع
+        for (int i = (int)current_floor - 1; i >= 0; i--) {
             if (total_requests & (1 << i)) {
                 *current_dir = DIR_DOWN;
                 return (u8)i;
