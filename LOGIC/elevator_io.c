@@ -1,147 +1,135 @@
 #include <stdint.h>
 #include "../Service/STD_Types.h"
 #include "../MCL/GPIO/gpio_interface.h"
-#include "../HAL/Keypad/keypad_interface.h"
-#include "../HAL/LCD_Hd44780/lcd_hd44780.h"
+#include "../MCL/UART/uart_interface.h"
+#include "../HAL/LCD_Aip31068_i2c/lcd_aip31068_i2c.h"
 #include "elevator_io.h"
 
-#define IO_BUZZER_PORT      GPIO_PORTD
-#define IO_BUZZER_PIN       GPIO_PIN7
+static uint8_h g_buttonEvents[IO_BUTTON_COUNT];
+static uint8_h g_lastButtonState[IO_BUTTON_COUNT];
 
-#define IO_LCD_ROW_STATUS   0u
-#define IO_LCD_ROW_FAULT    1u
+#if defined(HAL_LCD_AIP31068_I2C_H) || defined(LCD_AIP31068_I2C_H)
+static LCD_Aip31068_HandleType g_lcdHandle = {
+    .i2cAddress = 0x27
+};
+#endif
 
-static LCD_Hd44780_HandleType g_lcdHandle = {
-    .bus          = LCD_HD44780_BUS_4BIT,
-    .dataPort     = GPIO_PORTC,
-    .dataStartPin = GPIO_PIN4,
-    .controlPort  = GPIO_PORTD,
-    .rsPin        = GPIO_PIN0,
-    .rwPin        = 0u,
-    .enPin        = GPIO_PIN1,
-    .useRwPin     = 0u,
-    .rows         = 2u,
-    .cols         = 16u,
-    .initialized  = 0u,
-    .displayControl = 0u,
-    .entryMode    = 0u,
-    .cursorRow    = 0u,
-    .cursorCol    = 0u
+typedef struct {
+    uint8_h port;
+    uint8_h pin;
+} PinConfig_t;
+
+/* خريطة توصيل الأزرار */
+static const PinConfig_t g_inputPins[IO_BUTTON_COUNT] = {
+    { GPIO_PORTD, GPIO_PIN2 }, /* Hall Up G    */
+    { GPIO_PORTD, GPIO_PIN3 }, /* Hall Up 1    */
+    { GPIO_PORTD, GPIO_PIN4 }, /* Hall Down 1  */
+    { GPIO_PORTD, GPIO_PIN5 }, /* Hall Up 2    */
+    { GPIO_PORTD, GPIO_PIN6 }, /* Hall Down 2  */
+    { GPIO_PORTC, GPIO_PIN6 }, /* Hall Down 3  */
+
+    { GPIO_PORTB, GPIO_PIN0 }, /* Car Call G   */
+    { GPIO_PORTB, GPIO_PIN1 }, /* Car Call 1   */
+    { GPIO_PORTB, GPIO_PIN2 }, /* Car Call 2   */
+    { GPIO_PORTB, GPIO_PIN3 }, /* Car Call 3   */
+    { GPIO_PORTB, GPIO_PIN4 }, /* Door Open    */
+    { GPIO_PORTB, GPIO_PIN5 }, /* Door Close   */
+    { GPIO_PORTB, GPIO_PIN6 }, /* Emerg Alarm  */
+    { GPIO_PORTB, GPIO_PIN7 }, /* Safety Edge  */
+
+    { GPIO_PORTC, GPIO_PIN5 }  /* Emerg Stop   */
 };
 
-static Keypad_ConfigType g_keypadConfig = {
-    .rowPort      = GPIO_PORTD,
-    .rowStartPin  = GPIO_PIN0,
-    .colPort      = GPIO_PORTC,
-    .colStartPin  = GPIO_PIN0,
-    .keyMap       = {
-        { '1', '2', '3', '4' },
-        { '5', '6', '7', '8' },
-        { '9', 'A', 'B', 'C' },
-        { 'D', '0', 'E', 'F' }
-    }
-};
-
-static uint8_t g_buttonEvents[IO_BUTTON_COUNT];
-
-static uint8_t IO_MapKeyToId(uint8_h key)
+static void IO_DelayMs(uint16_h ms)
 {
-    uint8_t row;
-    uint8_t col;
-    const uint8_h keyMap[KEYPAD_ROWS][KEYPAD_COLS] = {
-        { '1', '2', '3', '4' },
-        { '5', '6', '7', '8' },
-        { '9', 'A', 'B', 'C' },
-        { 'D', '0', 'E', 'F' }
-    };
-
-    for (row = 0u; row < KEYPAD_ROWS; ++row)
-    {
-        for (col = 0u; col < KEYPAD_COLS; ++col)
-        {
-            if (keyMap[row][col] == key)
-            {
-                return (uint8_t)(row * KEYPAD_COLS + col);
-            }
-        }
-    }
-
-    return IO_BUTTON_ID_NONE;
-}
-
-static void IO_DelayMs(uint16_t ms)
-{
-    volatile uint16_t outer;
-    volatile uint16_t inner;
+    volatile uint16_h outer;
+    volatile uint16_h inner;
 
     for (outer = 0u; outer < ms; ++outer)
     {
         for (inner = 0u; inner < 1600u; ++inner)
         {
-            /* Busy wait, approximately 1 ms at 16 MHz. */
+            /* Delay 1 ms at 16 MHz */
         }
     }
 }
 
-static void IO_LcdPrintLine(uint8_t row, const char *text)
-{
-    if (g_lcdHandle.initialized == 0u)
-    {
-        return;
-    }
-
-    if (LCD_Hd44780_SetCursor(&g_lcdHandle, row, 0u) != E_OK)
-    {
-        return;
-    }
-
-    (void)LCD_Hd44780_WriteString(&g_lcdHandle, (const uint8_h *)text);
-}
-
 void IO_Init(void)
 {
-    uint8_t index;
+    uint8_h index;
 
+    /* 1. UART Init */
+    (void)GPIO_SetPinDirection(UART_PORT, UART_RX_PIN, GPIO_INPUT);
+    (void)GPIO_SetPinDirection(UART_PORT, UART_TX_PIN, GPIO_OUTPUT);
+
+    UART_ConfigType uartConfig = {
+        .baudRate = UART_BAUD_9600,
+        .dataSize = UART_DATA_8BITS,
+        .parity   = UART_PARITY_NONE,
+        .stopBits = UART_STOP_1BIT
+    };
+    (void)UART_Init(&uartConfig);
+
+    /* 2. Buzzer Init */
     (void)GPIO_SetPinDirection(IO_BUZZER_PORT, IO_BUZZER_PIN, GPIO_OUTPUT);
     (void)GPIO_SetPinValue(IO_BUZZER_PORT, IO_BUZZER_PIN, PIN_LOW);
 
-    (void)Keypad_Init(&g_keypadConfig);
+    /* 3. LEDs Init */
+    (void)GPIO_SetPinDirection(GPIO_PORTC, LED_UP_PIN, GPIO_OUTPUT);
+    (void)GPIO_SetPinDirection(GPIO_PORTC, LED_DOWN_PIN, GPIO_OUTPUT);
+    (void)GPIO_SetPinDirection(GPIO_PORTC, LED_OVERLOAD_PIN, GPIO_OUTPUT);
+    
+    (void)GPIO_SetPinValue(GPIO_PORTC, LED_UP_PIN, PIN_LOW);
+    (void)GPIO_SetPinValue(GPIO_PORTC, LED_DOWN_PIN, PIN_LOW);
+    (void)GPIO_SetPinValue(GPIO_PORTC, LED_OVERLOAD_PIN, PIN_LOW);
 
-    if (LCD_Hd44780_Init(&g_lcdHandle) == E_OK)
-    {
-        LCD_Hd44780_Clear(&g_lcdHandle);
-        g_lcdHandle.initialized = 1u;
-    }
+    /* 4. Motors Init */
+    (void)GPIO_SetPinDirection(L298_PORT, HOIST_IN1_PIN, GPIO_OUTPUT);
+    (void)GPIO_SetPinDirection(L298_PORT, HOIST_IN2_PIN, GPIO_OUTPUT);
+    (void)GPIO_SetPinDirection(L298_PORT, DOOR_IN3_PIN, GPIO_OUTPUT);
+    (void)GPIO_SetPinDirection(L298_PORT, DOOR_IN4_PIN, GPIO_OUTPUT);
 
+    (void)GPIO_SetPinValue(L298_PORT, HOIST_IN1_PIN, PIN_LOW);
+    (void)GPIO_SetPinValue(L298_PORT, HOIST_IN2_PIN, PIN_LOW);
+    (void)GPIO_SetPinValue(L298_PORT, DOOR_IN3_PIN, PIN_LOW);
+    (void)GPIO_SetPinValue(L298_PORT, DOOR_IN4_PIN, PIN_LOW);
+
+    /* 5. Buttons Init */
     for (index = 0u; index < IO_BUTTON_COUNT; ++index)
     {
+        (void)GPIO_SetPinDirection(g_inputPins[index].port, g_inputPins[index].pin, GPIO_INPUT);
+        (void)GPIO_SetPinValue(g_inputPins[index].port, g_inputPins[index].pin, PIN_HIGH);
+        
         g_buttonEvents[index] = 0u;
+        g_lastButtonState[index] = PIN_HIGH;
     }
+
+    /* 6. LCD Init */
+#if defined(HAL_LCD_AIP31068_I2C_H) || defined(LCD_AIP31068_I2C_H)
+    (void)LCD_Aip31068_Init(&g_lcdHandle);
+#endif
 }
 
 void IO_Update(void)
 {
-    uint8_h key;
-    uint8_t buttonId;
+    uint8_h index;
+    uint8_h currentState = PIN_HIGH;
 
-    if (Keypad_GetKey(&g_keypadConfig, &key) != E_OK)
+    for (index = 0u; index < IO_BUTTON_COUNT; ++index)
     {
-        return;
-    }
+        /* التعديل هنا: استخدام دالة القراءة الصحيحة من الـ Driver */
+        currentState = (uint8_h)GPIO_GetPinStatus(g_inputPins[index].port, g_inputPins[index].pin);
 
-    if (key == KEYPAD_NO_KEY)
-    {
-        return;
-    }
+        if ((g_lastButtonState[index] == PIN_HIGH) && (currentState == PIN_LOW))
+        {
+            g_buttonEvents[index] = 1u;
+        }
 
-    buttonId = IO_MapKeyToId(key);
-    if (buttonId != IO_BUTTON_ID_NONE)
-    {
-        g_buttonEvents[buttonId] = 1u;
+        g_lastButtonState[index] = currentState;
     }
 }
 
-uint8_t IO_GetButtonEvent(uint8_t id)
+uint8_h IO_GetButtonEvent(uint8_h id)
 {
     if (id >= IO_BUTTON_COUNT)
     {
@@ -157,64 +145,42 @@ uint8_t IO_GetButtonEvent(uint8_t id)
     return 0u;
 }
 
-void LCD_ShowStatus(void)
+void Serial_SendString(const char *str)
 {
-    if (g_lcdHandle.initialized == 0u)
-    {
-        return;
-    }
-
-    LCD_Hd44780_Clear(&g_lcdHandle);
-    IO_LcdPrintLine(IO_LCD_ROW_STATUS, "SMART ELEVATOR");
-    IO_LcdPrintLine(IO_LCD_ROW_FAULT, "STATUS: READY");
+    (void)UART_SendString((const uint8_h *)str);
 }
 
-void LCD_ShowFault(void)
+void Gong_Play(uint8_h type)
 {
-    if (g_lcdHandle.initialized == 0u)
-    {
-        return;
-    }
-
-    LCD_Hd44780_Clear(&g_lcdHandle);
-    IO_LcdPrintLine(IO_LCD_ROW_STATUS, "*** FAULT ***");
-    IO_LcdPrintLine(IO_LCD_ROW_FAULT, "CHECK SYSTEM");
-}
-
-void Gong_Play(uint8_t type)
-{
-    uint8_t count;
-    uint16_t duration;
-    uint16_t pause;
-
-    (void)GPIO_SetPinDirection(IO_BUZZER_PORT, IO_BUZZER_PIN, GPIO_OUTPUT);
+    uint8_h count;
+    uint16_h duration;
+    uint16_h pause;
 
     switch (type)
     {
         case 1u:
-            count = 1u;
-            duration = 300u;
-            pause = 200u;
-            break;
-
+            count = 1u; duration = 300u; pause = 200u; break;
         case 2u:
-            count = 2u;
-            duration = 100u;
-            pause = 100u;
-            break;
-
+            count = 2u; duration = 100u; pause = 100u; break;
         default:
-            count = 3u;
-            duration = 70u;
-            pause = 70u;
-            break;
+            count = 3u; duration = 70u;  pause = 70u;  break;
     }
 
-    for (uint8_t i = 0u; i < count; ++i)
+    for (uint8_h i = 0u; i < count; ++i)
     {
         (void)GPIO_SetPinValue(IO_BUZZER_PORT, IO_BUZZER_PIN, PIN_HIGH);
         IO_DelayMs(duration);
         (void)GPIO_SetPinValue(IO_BUZZER_PORT, IO_BUZZER_PIN, PIN_LOW);
         IO_DelayMs(pause);
     }
+}
+
+void LCD_ShowStatus(void)
+{
+    Serial_SendString("STATUS: System Ready\r\n");
+}
+
+void LCD_ShowFault(void)
+{
+    Serial_SendString("FAULT: EMERGENCY FAULT!\r\n");
 }

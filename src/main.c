@@ -3,10 +3,10 @@
 #include "../LOGIC/elevator_motion.h"
 #include "../LOGIC/elevator_safety.h"
 #include "elevator_io.h"
+
 #define DOOR_OPEN_TIME      200u
 #define DOOR_CLOSE_TIME     100u
 
-/* دالة لقراءة جميع الأزرار والمفاتيح وإضافة الطلبات لنظام التوجيه */
 static void Process_Inputs(void)
 {
     /* 1. طلبات أدوار الكابينة (Car Calls) */
@@ -31,12 +31,10 @@ static void Process_Inputs(void)
     if (IO_GetButtonEvent(IO_BTN_EMERG_ALARM)) { Gong_Play(3u); }
 }
 
-/* دالة لتحديث حالة لمبات البيان (LEDs) طبقاً لاتجاه المصعد */
 static void Update_LEDs(ElevatorDirection_t dir, FaultType_t fault)
 {
     if (fault != FAULT_NONE)
     {
-        /* إضاءة لمبة الحمل الزائد/الخطأ في حالة وجود عطل */
         (void)GPIO_SetPinValue(GPIO_PORTC, LED_OVERLOAD_PIN, PIN_HIGH);
         (void)GPIO_SetPinValue(GPIO_PORTC, LED_UP_PIN, PIN_LOW);
         (void)GPIO_SetPinValue(GPIO_PORTC, LED_DOWN_PIN, PIN_LOW);
@@ -72,11 +70,11 @@ int main(void)
     u8 target_floor = 0u;
     u16 door_timer = 0u;
 
-    /* 1. تهيئة جميع الطبقات (Drivers, Logic, IO) */
+    /* 1. تهيئة جميع الطبقات */
     IO_Init();
     Elevator_Dispatch_Init();
     Elevator_Motion_Init();
-    Elevator_Safety_Init();
+    Safety_Init();
 
     LCD_ShowStatus();
 
@@ -85,9 +83,10 @@ int main(void)
 
     while (1)
     {
-        /* 2. تحديث قراءات المدخلات والحساسات باستمرار */
+        /* 2. تحديث قراءات المدخلات وحالة الأمان */
         IO_Update();
         Motion_Update();
+        Safety_Update();
         Process_Inputs();
 
         /* 3. فحص مفاتيح وأعطال الأمان */
@@ -98,10 +97,16 @@ int main(void)
             Elevator_StopMotion();
             elevator_state = STATE_EMERGENCY;
             LCD_ShowFault();
-            Gong_Play(3u); /* صوت إنذار للطوارئ */
+            Gong_Play(3u);
             Update_LEDs(DIR_STOP, fault);
             Elevator_SendTelemetry();
             continue;
+        }
+        else if (elevator_state == STATE_EMERGENCY)
+        {
+            /* العودة للحالة الطبيعية عند زوال العطل */
+            elevator_state = STATE_IDLE;
+            LCD_ShowStatus();
         }
 
         current_floor = Elevator_GetCurPosition();
@@ -126,7 +131,7 @@ int main(void)
                 {
                     Elevator_StopMotion();
                     Elevator_ClearCall(current_floor);
-                    Gong_Play(1u); /* صوت وصول الدور */
+                    Gong_Play(1u);
                     Elevator_OpenDoor();
                     door_timer = 0u;
                     elevator_state = STATE_DOOR_OPEN;

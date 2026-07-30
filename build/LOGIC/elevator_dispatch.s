@@ -260,18 +260,13 @@ Dispatch_GetNextFloor:
 /* frame size = 0 */
 /* stack size = 10 */
 .L__stack_usage = 10
+	lds r24,current_direction
+	lds r25,current_direction+1
 	lds r29,current_floor
-	lds r20,current_direction
-	lds r21,current_direction+1
-	mov r22,r29
-	ldi r24,lo8(g_calls)
-	ldi r25,hi8(g_calls)
-	call DSP_NextDirection
-	sts current_direction+1,r25
-	sts current_direction,r24
 	cpi r24,1
 	cpc r25,__zero_reg__
-	brne .L23
+	breq .+2
+	rjmp .L23
 	lds r14,g_calls
 	mov r15,__zero_reg__
 	lds r12,g_calls+1
@@ -285,9 +280,22 @@ Dispatch_GetNextFloor:
 	mov r28,r16
 	cpi r16,lo8(4)
 	brlo .L27
-.L31:
+.L28:
 	mov r28,r29
-	rjmp .L22
+.L22:
+	mov r24,r28
+/* epilogue start */
+	pop r29
+	pop r28
+	pop r17
+	pop r16
+	pop r15
+	pop r14
+	pop r13
+	pop r12
+	pop r11
+	pop r10
+	ret
 .L27:
 	movw r24,r14
 	mov r0,r16
@@ -334,7 +342,7 @@ Dispatch_GetNextFloor:
 	rjmp .L24
 .L23:
 	sbiw r24,2
-	brne .L31
+	brne .L28
 	lds r16,g_calls
 	ldi r17,0
 	lds r14,g_calls+2
@@ -342,9 +350,10 @@ Dispatch_GetNextFloor:
 	lds r12,g_calls+1
 	mov r13,__zero_reg__
 	mov r28,r29
-.L28:
+.L29:
 	tst r28
-	breq .L31
+	brne .+2
+	rjmp .L28
 	subi r28,lo8(-(-1))
 	movw r18,r16
 	mov r0,r28
@@ -378,27 +387,14 @@ Dispatch_GetNextFloor:
 	dec r0
 	brpl 1b
 	sbrs r18,0
-	rjmp .L28
+	rjmp .L29
 	mov r22,r28
 	ldi r24,lo8(g_calls)
 	ldi r25,hi8(g_calls)
 	call callsBelow
 	cpse r24,__zero_reg__
-	rjmp .L28
-.L22:
-	mov r24,r28
-/* epilogue start */
-	pop r29
-	pop r28
-	pop r17
-	pop r16
-	pop r15
-	pop r14
-	pop r13
-	pop r12
-	pop r11
-	pop r10
-	ret
+	rjmp .L29
+	rjmp .L22
 	.size	Dispatch_GetNextFloor, .-Dispatch_GetNextFloor
 .global	Elevator_Dispatch_Init
 	.type	Elevator_Dispatch_Init, @function
@@ -436,19 +432,18 @@ Elevator_CalculateNextFloor:
 /* frame size = 0 */
 /* stack size = 2 */
 .L__stack_usage = 2
-	sts current_floor,r24
-	cp r22,__zero_reg__
-	cpc r23,__zero_reg__
-	breq .L48
 	movw r28,r22
-	mov r22,r24
+	sts current_floor,r24
 	lds r20,current_direction
 	lds r21,current_direction+1
+	mov r22,r24
 	ldi r24,lo8(g_calls)
 	ldi r25,hi8(g_calls)
 	call DSP_NextDirection
 	sts current_direction+1,r25
 	sts current_direction,r24
+	sbiw r28,0
+	breq .L48
 	std Y+1,r25
 	st Y,r24
 .L48:

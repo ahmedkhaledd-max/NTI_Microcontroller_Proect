@@ -5,9 +5,7 @@
  *========================================================*/
 
 static Calls_t g_calls;
-
 static ElevatorDirection_t current_direction = DIR_STOP;
-
 static u8 current_floor = 0u;
 
 /*=========================================================
@@ -93,25 +91,18 @@ void Call_Register(u8 floor, u8 type)
     switch(type)
     {
         case CALL_TYPE_CAR:
-
-            Dispatch_BitSet(floor,&g_calls.carCall);
-
+            Dispatch_BitSet(floor, &g_calls.carCall);
             break;
 
         case CALL_TYPE_HALL_UP:
-
-            Dispatch_BitSet(floor,&g_calls.hallUp);
-
+            Dispatch_BitSet(floor, &g_calls.hallUp);
             break;
 
         case CALL_TYPE_HALL_DOWN:
-
-            Dispatch_BitSet(floor,&g_calls.hallDown);
-
+            Dispatch_BitSet(floor, &g_calls.hallDown);
             break;
 
         default:
-
             break;
     }
 }
@@ -127,10 +118,11 @@ void Call_Clear(u8 floor)
         return;
     }
 
-    Dispatch_BitClear(floor,&g_calls.carCall);
-    Dispatch_BitClear(floor,&g_calls.hallUp);
-    Dispatch_BitClear(floor,&g_calls.hallDown);
+    Dispatch_BitClear(floor, &g_calls.carCall);
+    Dispatch_BitClear(floor, &g_calls.hallUp);
+    Dispatch_BitClear(floor, &g_calls.hallDown);
 }
+
 /*=========================================================
  * LOOK Stop Decision
  *========================================================*/
@@ -167,21 +159,20 @@ static u8 shouldStop(const Calls_t *calls,
 
     if ((direction == DIR_UP) &&
         (calls->hallDown & (1u << floor)) &&
-        (!callsAbove(calls,floor)))
+        (!callsAbove(calls, floor)))
     {
         return 1u;
     }
 
     if ((direction == DIR_DOWN) &&
         (calls->hallUp & (1u << floor)) &&
-        (!callsBelow(calls,floor)))
+        (!callsBelow(calls, floor)))
     {
         return 1u;
     }
 
     return 0u;
 }
-
 
 /*=========================================================
  * Decide Next Direction (LOOK Algorithm)
@@ -192,31 +183,29 @@ ElevatorDirection_t DSP_NextDirection(
                         u8 floor,
                         ElevatorDirection_t current)
 {
-
     if(current == DIR_UP)
     {
-        if(callsAbove(calls,floor))
+        if(callsAbove(calls, floor))
         {
             return DIR_UP;
         }
 
-        if(callsBelow(calls,floor))
+        if(callsBelow(calls, floor))
         {
             return DIR_DOWN;
         }
 
         return DIR_STOP;
     }
-
 
     if(current == DIR_DOWN)
     {
-        if(callsBelow(calls,floor))
+        if(callsBelow(calls, floor))
         {
             return DIR_DOWN;
         }
 
-        if(callsAbove(calls,floor))
+        if(callsAbove(calls, floor))
         {
             return DIR_UP;
         }
@@ -224,21 +213,20 @@ ElevatorDirection_t DSP_NextDirection(
         return DIR_STOP;
     }
 
-
     /* Elevator is idle */
-
-    if(callsAbove(calls,floor))
+    if(callsAbove(calls, floor))
     {
         return DIR_UP;
     }
 
-    if(callsBelow(calls,floor))
+    if(callsBelow(calls, floor))
     {
         return DIR_DOWN;
     }
 
     return DIR_STOP;
 }
+
 /*=========================================================
  * Get Next Target Floor (LOOK Algorithm)
  *========================================================*/
@@ -247,9 +235,10 @@ u8 Dispatch_GetNextFloor(void)
 {
     u8 floor;
 
-    current_direction = DSP_NextDirection(&g_calls,
-                                          current_floor,
-                                          current_direction);
+    /* 
+     * تم إزالة الاستدعاء المزدوج لـ DSP_NextDirection 
+     * للاعتماد مباشرة على current_direction المُحدثة
+     */
 
     if(current_direction == DIR_UP)
     {
@@ -263,7 +252,6 @@ u8 Dispatch_GetNextFloor(void)
             }
         }
     }
-
     else if(current_direction == DIR_DOWN)
     {
         floor = current_floor;
@@ -281,7 +269,6 @@ u8 Dispatch_GetNextFloor(void)
 
     return current_floor;
 }
-
 
 /*=========================================================
  * Elevator API
@@ -307,13 +294,14 @@ u8 Elevator_CalculateNextFloor(u8 floor,
 {
     current_floor = floor;
 
+    /* 1. حساب وتحديث الاتجاه الحالي أولاً */
+    current_direction = DSP_NextDirection(&g_calls,
+                                          current_floor,
+                                          current_direction);
+
+    /* 2. إرجاع الاتجاه عبر الـ pointer */
     if(direction != NULL)
     {
-        current_direction =
-        DSP_NextDirection(&g_calls,
-                          current_floor,
-                          current_direction);
-
         *direction = current_direction;
     }
 

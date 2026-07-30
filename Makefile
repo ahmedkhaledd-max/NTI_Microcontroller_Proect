@@ -32,6 +32,9 @@ INCLUDE_DIRS := include src LOGIC Service \
     $(sort $(dir $(wildcard HAL/*/*.h)) $(wildcard HAL/*/*/*.h))
 CFLAGS += $(addprefix -I,$(INCLUDE_DIRS))
 
+# دالة لإنشاء المجلدات بأمر متوافق مع نظام Windows
+MKDIR = if not exist "$(subst /,\,$(1))" mkdir "$(subst /,\,$(1))"
+
 all: $(TARGET).hex
 
 $(TARGET).elf: $(OBJS)
@@ -40,37 +43,26 @@ $(TARGET).elf: $(OBJS)
 $(TARGET).hex: $(TARGET).elf
 	$(OBJCOPY) -O ihex -R .eeprom $< $@
 
-# --- Build pipeline stages, mirrored per source folder under build/ ---
-# src/main.c        -> build/src/main.i   .s   .o
-# MCL/GPIO/gpio.c    -> build/MCL/GPIO/gpio.i   .s   .o
-#
-# .c -> .i : preprocessing   (macro expansion, #include text replacement)
-# .i -> .s : compiling       (C code -> AVR assembly)
-# .s -> .o : assembling      (assembly -> machine code / object file)
-# .o -> .elf -> .hex : linking + hex conversion (rules above, top of file)
+# --- Build pipeline stages ---
 
 build/%.i: %.c
-	@mkdir -p "$(dir $@)"
+	@$(call MKDIR,$(dir $@))
 	$(CC) $(CFLAGS) -MMD -MP -MF $(@:.i=.d) -MT $@ -E $< -o $@
 
 build/%.s: build/%.i
-	@mkdir -p "$(dir $@)"
+	@$(call MKDIR,$(dir $@))
 	$(CC) $(CFLAGS) -S $< -o $@
 
 build/%.o: build/%.s
-	@mkdir -p "$(dir $@)"
+	@$(call MKDIR,$(dir $@))
 	$(CC) $(CFLAGS) -c $< -o $@
 
-# Keep .i/.s intermediates around for inspection instead of letting make
-# delete them as "just intermediate" files in the chain.
 .SECONDARY:
 
-# Header dependencies recorded during preprocessing, so editing a .h
-# re-runs the .c -> .i step for every source that includes it.
 -include $(DEPS)
 
 clean:
-	-rm -rf build
+	@if exist build rmdir /s /q build
 
 flash: $(TARGET).hex
 	$(AVRDUDE) -c usbasp -p $(MCU) -U flash:w:$<:i

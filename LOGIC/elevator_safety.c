@@ -1,57 +1,93 @@
 #include "elevator_safety.h"
-// استدعاء درافير الـ UART أو الـ Interrupts حسب الحاجة
+#include "../MCL/GPIO/gpio_interface.h"
+#include "../MCL/ADC/adc_interface.h"
+#include "../LOGIC/elevator_io.h"
 
 static FaultType_t current_fault = FAULT_NONE;
 
-void Elevator_Safety_Init(void) {
+void Elevator_Safety_Init(void) 
+{
     current_fault = FAULT_NONE;
-    // تهيئة مقاطعات الطوارئ الخارجية (مثل INT0 لزر الـ Emergency Stop)
 }
 
-FaultType_t Elevator_CheckFaults(void) {
-    // 1. فحص زر الطوارئ (Emergency Stop)
-    // 2. فحص حساس زيادة الحمولة (Overload Sensor عبر الـ ADC أو GPIO)
-    // 3. فحص عائق الأبواب
-    
+FaultType_t Elevator_CheckFaults(void) 
+{
+    u8 emerg_pin_val = PIN_LOW;
+    u8 door_edge_pin_val = PIN_LOW;
+    uint16_h load_adc_val = 0u;
+
+    /* 1. فحص زر الطوارئ (Emergency Stop) الموصل على البن PC5 */
+    (void)GPIO_SetPinValue(GPIO_PORTC, GPIO_PIN5, &emerg_pin_val);
+    if (emerg_pin_val == PIN_HIGH) 
+    {
+        current_fault = FAULT_EMERGENCY_STOP_ID;
+        return current_fault;
+    }
+
+    /* 2. فحص حساس الوزن (Car Load) الموصل على PA1 عبر قناة الـ ADC1 */
+    (void)ADC_ReadChannelBlocking(ADC_CHANNEL1, &load_adc_val);
+    if (load_adc_val > OVERLOAD_ADC_THRESHOLD) 
+    {
+        current_fault = FAULT_OVERLOAD_ID;
+        return current_fault;
+    }
+
+    /* 3. فحص عائق الباب (Door Safety Edge) الموصل على البن PB7 */
+    (void)GPIO_SetPinValue(GPIO_PORTB, GPIO_PIN7, &door_edge_pin_val);
+    if (door_edge_pin_val == PIN_HIGH) 
+    {
+        current_fault = FAULT_DOOR_OBSTRUCTION_ID;
+        return current_fault;
+    }
+
+    /* في حالة عدم وجود أي أعطال */
+    current_fault = FAULT_NONE;
     return current_fault;
 }
 
-void Elevator_LogFault(FaultType_t fault) {
+void Elevator_LogFault(FaultType_t fault) 
+{
     current_fault = fault;
-    // حفظ الخطأ في الـ EEPROM أو الـ Ring Buffer كمرجع للصيانة
 }
 
-void Elevator_SendTelemetry(void) {
-    // إرسال بيانات الحالة (الدور الحالي، الاتجاه، الأخطاء، وحالة الأبواب) عبر الـ UART كل ثانيتين
+void Elevator_SendTelemetry(void) 
+{
+    /* إرسال بيانات الحالة عبر الـ UART */
 }
 
 /* ================================================================================
- *  الواجهة المختصرة التي يستدعيها elevator_system.c
+ *  الواجهة العامة للتحكم بالأمان (Public Safety API)
  * ============================================================================== */
 
-void Safety_Init(void) {
+void Safety_Init(void) 
+{
     Elevator_Safety_Init();
 }
 
-void Safety_Update(void) {
+void Safety_Update(void) 
+{
     (void)Elevator_CheckFaults();
 }
 
-void Emergency_Stop(void) {
+void Emergency_Stop(void) 
+{
     Elevator_LogFault(FAULT_EMERGENCY_STOP_ID);
-    // قطع الحركة فوراً: إيقاف موتور المقصورة هنا
 }
 
-void Fault_Set(uint8_h id) {
+void Fault_Set(u8 id) 
+{
     Elevator_LogFault((FaultType_t)id);
 }
 
-void Fault_Clear(uint8_h id) {
-    if (current_fault == (FaultType_t)id) {
+void Fault_Clear(u8 id) 
+{
+    if (current_fault == (FaultType_t)id) 
+    {
         current_fault = FAULT_NONE;
     }
 }
 
-bool Fault_IsActive(void) {
+bool Fault_IsActive(void) 
+{
     return (current_fault != FAULT_NONE);
 }

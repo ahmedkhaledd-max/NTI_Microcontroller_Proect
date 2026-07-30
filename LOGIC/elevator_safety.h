@@ -9,6 +9,8 @@
 #define FAULT_OVERLOAD         3u
 #define FAULT_TIMEOUT          4u
 
+#define OVERLOAD_ADC_THRESHOLD 800u
+
 typedef enum {
     FAULT_NONE = 0,
     FAULT_EMERGENCY_STOP_ID,

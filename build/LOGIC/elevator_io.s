@@ -58,126 +58,50 @@ IO_DelayMs:
 	std Y+1,r18
 	rjmp .L3
 	.size	IO_DelayMs, .-IO_DelayMs
-	.type	IO_LcdPrintLine, @function
-IO_LcdPrintLine:
-	push r28
-	push r29
-/* prologue: function */
-/* frame size = 0 */
-/* stack size = 2 */
-.L__stack_usage = 2
-	lds r25,g_lcdHandle+11
-	tst r25
-	breq .L6
-	movw r28,r22
-	mov r22,r24
-	ldi r20,0
-	ldi r24,lo8(g_lcdHandle)
-	ldi r25,hi8(g_lcdHandle)
-	call LCD_Hd44780_SetCursor
-	or r24,r25
-	brne .L6
-	movw r22,r28
-	ldi r24,lo8(g_lcdHandle)
-	ldi r25,hi8(g_lcdHandle)
-/* epilogue start */
-	pop r29
-	pop r28
-	jmp LCD_Hd44780_WriteString
-.L6:
-/* epilogue start */
-	pop r29
-	pop r28
-	ret
-	.size	IO_LcdPrintLine, .-IO_LcdPrintLine
+	.section	.rodata
+.LC0:
+	.byte	-128
+	.byte	37
+	.byte	0
+	.byte	0
+	.word	3
+	.word	0
+	.word	0
+	.text
 .global	IO_Init
 	.type	IO_Init, @function
 IO_Init:
-/* prologue: function */
-/* frame size = 0 */
-/* stack size = 0 */
-.L__stack_usage = 0
-	ldi r20,lo8(1)
-	ldi r22,lo8(7)
-	ldi r24,lo8(3)
-	call GPIO_SetPinDirection
-	ldi r20,0
-	ldi r22,lo8(7)
-	ldi r24,lo8(3)
-	call GPIO_SetPinValue
-	ldi r24,lo8(g_keypadConfig)
-	ldi r25,hi8(g_keypadConfig)
-	call Keypad_Init
-	ldi r24,lo8(g_lcdHandle)
-	ldi r25,hi8(g_lcdHandle)
-	call LCD_Hd44780_Init
-	or r24,r25
-	brne .L11
-	ldi r24,lo8(g_lcdHandle)
-	ldi r25,hi8(g_lcdHandle)
-	call LCD_Hd44780_Clear
-	ldi r24,lo8(1)
-	sts g_lcdHandle+11,r24
-.L11:
-	ldi r30,lo8(g_buttonEvents)
-	ldi r31,hi8(g_buttonEvents)
-.L12:
-	st Z+,__zero_reg__
-	ldi r24,hi8(g_buttonEvents+16)
-	cpi r30,lo8(g_buttonEvents+16)
-	cpc r31,r24
-	brne .L12
-/* epilogue start */
-	ret
-	.size	IO_Init, .-IO_Init
-	.section	.rodata
-.LC0:
-	.byte	49
-	.byte	50
-	.byte	51
-	.byte	52
-	.byte	53
-	.byte	54
-	.byte	55
-	.byte	56
-	.byte	57
-	.byte	65
-	.byte	66
-	.byte	67
-	.byte	68
-	.byte	48
-	.byte	69
-	.byte	70
-	.text
-.global	IO_Update
-	.type	IO_Update, @function
-IO_Update:
+	push r10
+	push r11
+	push r12
+	push r13
+	push r14
+	push r15
+	push r16
+	push r17
 	push r28
 	push r29
 	in r28,__SP_L__
 	in r29,__SP_H__
-	sbiw r28,17
+	sbiw r28,10
 	in __tmp_reg__,__SREG__
 	cli
 	out __SP_H__,r29
 	out __SREG__,__tmp_reg__
 	out __SP_L__,r28
 /* prologue: function */
-/* frame size = 17 */
-/* stack size = 19 */
-.L__stack_usage = 19
-	movw r22,r28
-	subi r22,-17
-	sbci r23,-1
-	ldi r24,lo8(g_keypadConfig)
-	ldi r25,hi8(g_keypadConfig)
-	call Keypad_GetKey
-	or r24,r25
-	brne .L14
-	ldd r20,Y+17
-	cpi r20,lo8(-1)
-	breq .L14
-	ldi r24,lo8(16)
+/* frame size = 10 */
+/* stack size = 20 */
+.L__stack_usage = 20
+	ldi r20,0
+	ldi r22,0
+	ldi r24,lo8(3)
+	call GPIO_SetPinDirection
+	ldi r20,lo8(1)
+	ldi r22,lo8(1)
+	ldi r24,lo8(3)
+	call GPIO_SetPinDirection
+	ldi r24,lo8(10)
 	ldi r30,lo8(.LC0)
 	ldi r31,hi8(.LC0)
 	movw r26,r28
@@ -189,28 +113,111 @@ IO_Update:
 	brne 0b
 	movw r24,r28
 	adiw r24,1
-	ldi r30,0
-.L16:
-	ldi r19,0
-	ldi r18,0
-.L18:
-	movw r26,r24
-	add r26,r18
-	adc r27,r19
-	ld r22,X
-	cpse r20,r22
-	rjmp .L17
-	lsl r30
-	lsl r30
-	add r30,r18
-	ldi r31,0
-	subi r30,lo8(-(g_buttonEvents))
-	sbci r31,hi8(-(g_buttonEvents))
+	call UART_Init
+	ldi r20,lo8(1)
+	ldi r22,lo8(7)
+	ldi r24,lo8(3)
+	call GPIO_SetPinDirection
+	ldi r20,0
+	ldi r22,lo8(7)
+	ldi r24,lo8(3)
+	call GPIO_SetPinValue
+	ldi r20,lo8(1)
+	ldi r22,lo8(2)
+	ldi r24,lo8(2)
+	call GPIO_SetPinDirection
+	ldi r20,lo8(1)
+	ldi r22,lo8(3)
+	ldi r24,lo8(2)
+	call GPIO_SetPinDirection
+	ldi r20,lo8(1)
+	ldi r22,lo8(4)
+	ldi r24,lo8(2)
+	call GPIO_SetPinDirection
+	ldi r20,0
+	ldi r22,lo8(2)
+	ldi r24,lo8(2)
+	call GPIO_SetPinValue
+	ldi r20,0
+	ldi r22,lo8(3)
+	ldi r24,lo8(2)
+	call GPIO_SetPinValue
+	ldi r20,0
+	ldi r22,lo8(4)
+	ldi r24,lo8(2)
+	call GPIO_SetPinValue
+	ldi r20,lo8(1)
+	ldi r22,lo8(4)
+	ldi r24,0
+	call GPIO_SetPinDirection
+	ldi r20,lo8(1)
+	ldi r22,lo8(5)
+	ldi r24,0
+	call GPIO_SetPinDirection
+	ldi r20,lo8(1)
+	ldi r22,lo8(6)
+	ldi r24,0
+	call GPIO_SetPinDirection
+	ldi r20,lo8(1)
+	ldi r22,lo8(7)
+	ldi r24,0
+	call GPIO_SetPinDirection
+	ldi r20,0
+	ldi r22,lo8(4)
+	ldi r24,0
+	call GPIO_SetPinValue
+	ldi r20,0
+	ldi r22,lo8(5)
+	ldi r24,0
+	call GPIO_SetPinValue
+	ldi r20,0
+	ldi r22,lo8(6)
+	ldi r24,0
+	call GPIO_SetPinValue
+	ldi r20,0
+	ldi r22,lo8(7)
+	ldi r24,0
+	call GPIO_SetPinValue
+	ldi r16,lo8(g_inputPins)
+	ldi r17,hi8(g_inputPins)
+	ldi r24,lo8(g_buttonEvents)
+	mov r12,r24
+	ldi r24,hi8(g_buttonEvents)
+	mov r13,r24
+	ldi r25,lo8(g_lastButtonState)
+	mov r14,r25
+	ldi r25,hi8(g_lastButtonState)
+	mov r15,r25
+.L7:
+	movw r30,r16
+	ldd r10,Z+1
+	ld r11,Z
+	ldi r20,0
+	mov r22,r10
+	mov r24,r11
+	call GPIO_SetPinDirection
+	ldi r20,lo8(1)
+	mov r22,r10
+	mov r24,r11
+	call GPIO_SetPinValue
+	movw r30,r12
+	st Z+,__zero_reg__
+	movw r12,r30
 	ldi r24,lo8(1)
-	st Z,r24
-.L14:
+	movw r30,r14
+	st Z+,r24
+	movw r14,r30
+	subi r16,-2
+	sbci r17,-1
+	ldi r31,hi8(g_inputPins+30)
+	cpi r16,lo8(g_inputPins+30)
+	cpc r17,r31
+	brne .L7
+	ldi r24,lo8(g_lcdHandle)
+	ldi r25,hi8(g_lcdHandle)
+	call LCD_Aip31068_Init
 /* epilogue start */
-	adiw r28,17
+	adiw r28,10
 	in __tmp_reg__,__SREG__
 	cli
 	out __SP_H__,r29
@@ -218,18 +225,70 @@ IO_Update:
 	out __SP_L__,r28
 	pop r29
 	pop r28
+	pop r17
+	pop r16
+	pop r15
+	pop r14
+	pop r13
+	pop r12
+	pop r11
+	pop r10
 	ret
-.L17:
-	subi r18,-1
-	sbci r19,-1
-	cpi r18,4
-	cpc r19,__zero_reg__
-	brne .L18
-	subi r30,lo8(-(1))
-	adiw r24,4
-	cpi r30,lo8(4)
-	brne .L16
-	rjmp .L14
+	.size	IO_Init, .-IO_Init
+.global	IO_Update
+	.type	IO_Update, @function
+IO_Update:
+	push r14
+	push r15
+	push r16
+	push r17
+	push r28
+	push r29
+/* prologue: function */
+/* frame size = 0 */
+/* stack size = 6 */
+.L__stack_usage = 6
+	ldi r16,lo8(g_inputPins)
+	ldi r17,hi8(g_inputPins)
+	ldi r24,lo8(g_lastButtonState)
+	mov r14,r24
+	ldi r24,hi8(g_lastButtonState)
+	mov r15,r24
+	ldi r29,0
+	ldi r28,0
+.L11:
+	movw r30,r16
+	ldd r22,Z+1
+	ld r24,Z
+	call GPIO_GetPinStatus
+	movw r30,r14
+	ld r25,Z
+	cpi r25,lo8(1)
+	brne .L10
+	cpse r24,__zero_reg__
+	rjmp .L10
+	movw r30,r28
+	subi r30,lo8(-(g_buttonEvents))
+	sbci r31,hi8(-(g_buttonEvents))
+	st Z,r25
+.L10:
+	movw r30,r14
+	st Z+,r24
+	movw r14,r30
+	adiw r28,1
+	subi r16,-2
+	sbci r17,-1
+	cpi r28,15
+	cpc r29,__zero_reg__
+	brne .L11
+/* epilogue start */
+	pop r29
+	pop r28
+	pop r17
+	pop r16
+	pop r15
+	pop r14
+	ret
 	.size	IO_Update, .-IO_Update
 .global	IO_GetButtonEvent
 	.type	IO_GetButtonEvent, @function
@@ -238,86 +297,33 @@ IO_GetButtonEvent:
 /* frame size = 0 */
 /* stack size = 0 */
 .L__stack_usage = 0
-	cpi r24,lo8(16)
-	brsh .L29
+	cpi r24,lo8(15)
+	brsh .L15
 	mov r30,r24
 	ldi r31,0
 	subi r30,lo8(-(g_buttonEvents))
 	sbci r31,hi8(-(g_buttonEvents))
 	ld r24,Z
 	tst r24
-	breq .L27
+	breq .L13
 	st Z,__zero_reg__
 	ldi r24,lo8(1)
 	ret
-.L29:
+.L15:
 	ldi r24,0
-.L27:
+.L13:
 /* epilogue start */
 	ret
 	.size	IO_GetButtonEvent, .-IO_GetButtonEvent
-	.section	.rodata.str1.1,"aMS",@progbits,1
-.LC1:
-	.string	"SMART ELEVATOR"
-.LC2:
-	.string	"STATUS: READY"
-	.text
-.global	LCD_ShowStatus
-	.type	LCD_ShowStatus, @function
-LCD_ShowStatus:
+.global	Serial_SendString
+	.type	Serial_SendString, @function
+Serial_SendString:
 /* prologue: function */
 /* frame size = 0 */
 /* stack size = 0 */
 .L__stack_usage = 0
-	lds r24,g_lcdHandle+11
-	tst r24
-	breq .L33
-	ldi r24,lo8(g_lcdHandle)
-	ldi r25,hi8(g_lcdHandle)
-	call LCD_Hd44780_Clear
-	ldi r22,lo8(.LC1)
-	ldi r23,hi8(.LC1)
-	ldi r24,0
-	call IO_LcdPrintLine
-	ldi r22,lo8(.LC2)
-	ldi r23,hi8(.LC2)
-	ldi r24,lo8(1)
-	jmp IO_LcdPrintLine
-.L33:
-/* epilogue start */
-	ret
-	.size	LCD_ShowStatus, .-LCD_ShowStatus
-	.section	.rodata.str1.1
-.LC3:
-	.string	"*** FAULT ***"
-.LC4:
-	.string	"CHECK SYSTEM"
-	.text
-.global	LCD_ShowFault
-	.type	LCD_ShowFault, @function
-LCD_ShowFault:
-/* prologue: function */
-/* frame size = 0 */
-/* stack size = 0 */
-.L__stack_usage = 0
-	lds r24,g_lcdHandle+11
-	tst r24
-	breq .L35
-	ldi r24,lo8(g_lcdHandle)
-	ldi r25,hi8(g_lcdHandle)
-	call LCD_Hd44780_Clear
-	ldi r22,lo8(.LC3)
-	ldi r23,hi8(.LC3)
-	ldi r24,0
-	call IO_LcdPrintLine
-	ldi r22,lo8(.LC4)
-	ldi r23,hi8(.LC4)
-	ldi r24,lo8(1)
-	jmp IO_LcdPrintLine
-.L35:
-/* epilogue start */
-	ret
-	.size	LCD_ShowFault, .-LCD_ShowFault
+	jmp UART_SendString
+	.size	Serial_SendString, .-Serial_SendString
 .global	Gong_Play
 	.type	Gong_Play, @function
 Gong_Play:
@@ -332,10 +338,6 @@ Gong_Play:
 /* stack size = 6 */
 .L__stack_usage = 6
 	mov r28,r24
-	ldi r20,lo8(1)
-	ldi r22,lo8(7)
-	ldi r24,lo8(3)
-	call GPIO_SetPinDirection
 	ldi r16,lo8(-56)
 	ldi r17,0
 	ldi r24,lo8(44)
@@ -343,23 +345,23 @@ Gong_Play:
 	clr r15
 	inc r15
 	cpi r28,lo8(1)
-	breq .L39
+	breq .L22
 	ldi r16,lo8(100)
 	ldi r17,0
 	ldi r18,lo8(100)
 	mov r14,r18
 	mov r15,__zero_reg__
 	cpi r28,lo8(2)
-	breq .L39
+	breq .L22
 	ldi r16,lo8(70)
 	ldi r17,0
 	ldi r25,lo8(70)
 	mov r14,r25
 	mov r15,__zero_reg__
 	ldi r28,lo8(3)
-.L39:
+.L22:
 	ldi r29,0
-.L41:
+.L24:
 	ldi r20,lo8(1)
 	ldi r22,lo8(7)
 	ldi r24,lo8(3)
@@ -374,7 +376,7 @@ Gong_Play:
 	call IO_DelayMs
 	subi r29,lo8(-(1))
 	cpse r28,r29
-	rjmp .L41
+	rjmp .L24
 /* epilogue start */
 	pop r29
 	pop r28
@@ -384,50 +386,80 @@ Gong_Play:
 	pop r14
 	ret
 	.size	Gong_Play, .-Gong_Play
-	.local	g_buttonEvents
-	.comm	g_buttonEvents,16,1
-	.data
-	.type	g_keypadConfig, @object
-	.size	g_keypadConfig, 20
-g_keypadConfig:
+	.section	.rodata.str1.1,"aMS",@progbits,1
+.LC1:
+	.string	"STATUS: System Ready\r\n"
+	.text
+.global	LCD_ShowStatus
+	.type	LCD_ShowStatus, @function
+LCD_ShowStatus:
+/* prologue: function */
+/* frame size = 0 */
+/* stack size = 0 */
+.L__stack_usage = 0
+	ldi r24,lo8(.LC1)
+	ldi r25,hi8(.LC1)
+	jmp UART_SendString
+	.size	LCD_ShowStatus, .-LCD_ShowStatus
+	.section	.rodata.str1.1
+.LC2:
+	.string	"FAULT: EMERGENCY FAULT!\r\n"
+	.text
+.global	LCD_ShowFault
+	.type	LCD_ShowFault, @function
+LCD_ShowFault:
+/* prologue: function */
+/* frame size = 0 */
+/* stack size = 0 */
+.L__stack_usage = 0
+	ldi r24,lo8(.LC2)
+	ldi r25,hi8(.LC2)
+	jmp UART_SendString
+	.size	LCD_ShowFault, .-LCD_ShowFault
+	.section	.rodata
+	.type	g_inputPins, @object
+	.size	g_inputPins, 30
+g_inputPins:
 	.byte	3
-	.byte	0
 	.byte	2
-	.byte	0
-	.byte	49
-	.byte	50
-	.byte	51
-	.byte	52
-	.byte	53
-	.byte	54
-	.byte	55
-	.byte	56
-	.byte	57
-	.byte	65
-	.byte	66
-	.byte	67
-	.byte	68
-	.byte	48
-	.byte	69
-	.byte	70
-	.type	g_lcdHandle, @object
-	.size	g_lcdHandle, 16
-g_lcdHandle:
-	.word	0
-	.byte	2
+	.byte	3
+	.byte	3
+	.byte	3
 	.byte	4
 	.byte	3
-	.byte	0
-	.byte	0
+	.byte	5
+	.byte	3
+	.byte	6
+	.byte	2
+	.byte	6
 	.byte	1
 	.byte	0
+	.byte	1
+	.byte	1
+	.byte	1
 	.byte	2
-	.byte	16
-	.byte	0
-	.byte	0
-	.byte	0
-	.byte	0
-	.byte	0
+	.byte	1
+	.byte	3
+	.byte	1
+	.byte	4
+	.byte	1
+	.byte	5
+	.byte	1
+	.byte	6
+	.byte	1
+	.byte	7
+	.byte	2
+	.byte	5
+	.data
+	.type	g_lcdHandle, @object
+	.size	g_lcdHandle, 8
+g_lcdHandle:
+	.byte	39
+	.zero	7
+	.local	g_lastButtonState
+	.comm	g_lastButtonState,15,1
+	.local	g_buttonEvents
+	.comm	g_buttonEvents,15,1
 	.ident	"GCC: (GNU) 7.3.0"
 .global __do_copy_data
 .global __do_clear_bss

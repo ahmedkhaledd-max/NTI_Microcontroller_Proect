@@ -118,9 +118,7 @@ u8 Elevator_CalculateNextFloor(
 
 
 static Calls_t g_calls;
-
 static ElevatorDirection_t current_direction = DIR_STOP;
-
 static u8 current_floor = 0u;
 
 
@@ -206,25 +204,18 @@ void Call_Register(u8 floor, u8 type)
     switch(type)
     {
         case 0u:
-
-            Dispatch_BitSet(floor,&g_calls.carCall);
-
+            Dispatch_BitSet(floor, &g_calls.carCall);
             break;
 
         case 1u:
-
-            Dispatch_BitSet(floor,&g_calls.hallUp);
-
+            Dispatch_BitSet(floor, &g_calls.hallUp);
             break;
 
         case 2u:
-
-            Dispatch_BitSet(floor,&g_calls.hallDown);
-
+            Dispatch_BitSet(floor, &g_calls.hallDown);
             break;
 
         default:
-
             break;
     }
 }
@@ -240,10 +231,11 @@ void Call_Clear(u8 floor)
         return;
     }
 
-    Dispatch_BitClear(floor,&g_calls.carCall);
-    Dispatch_BitClear(floor,&g_calls.hallUp);
-    Dispatch_BitClear(floor,&g_calls.hallDown);
+    Dispatch_BitClear(floor, &g_calls.carCall);
+    Dispatch_BitClear(floor, &g_calls.hallUp);
+    Dispatch_BitClear(floor, &g_calls.hallDown);
 }
+
 
 
 
@@ -280,14 +272,14 @@ static u8 shouldStop(const Calls_t *calls,
 
     if ((direction == DIR_UP) &&
         (calls->hallDown & (1u << floor)) &&
-        (!callsAbove(calls,floor)))
+        (!callsAbove(calls, floor)))
     {
         return 1u;
     }
 
     if ((direction == DIR_DOWN) &&
         (calls->hallUp & (1u << floor)) &&
-        (!callsBelow(calls,floor)))
+        (!callsBelow(calls, floor)))
     {
         return 1u;
     }
@@ -299,37 +291,34 @@ static u8 shouldStop(const Calls_t *calls,
 
 
 
-
 ElevatorDirection_t DSP_NextDirection(
                         const Calls_t *calls,
                         u8 floor,
                         ElevatorDirection_t current)
 {
-
     if(current == DIR_UP)
     {
-        if(callsAbove(calls,floor))
+        if(callsAbove(calls, floor))
         {
             return DIR_UP;
         }
 
-        if(callsBelow(calls,floor))
+        if(callsBelow(calls, floor))
         {
             return DIR_DOWN;
         }
 
         return DIR_STOP;
     }
-
 
     if(current == DIR_DOWN)
     {
-        if(callsBelow(calls,floor))
+        if(callsBelow(calls, floor))
         {
             return DIR_DOWN;
         }
 
-        if(callsAbove(calls,floor))
+        if(callsAbove(calls, floor))
         {
             return DIR_UP;
         }
@@ -338,14 +327,12 @@ ElevatorDirection_t DSP_NextDirection(
     }
 
 
-
-
-    if(callsAbove(calls,floor))
+    if(callsAbove(calls, floor))
     {
         return DIR_UP;
     }
 
-    if(callsBelow(calls,floor))
+    if(callsBelow(calls, floor))
     {
         return DIR_DOWN;
     }
@@ -356,13 +343,15 @@ ElevatorDirection_t DSP_NextDirection(
 
 
 
+
 u8 Dispatch_GetNextFloor(void)
 {
     u8 floor;
 
-    current_direction = DSP_NextDirection(&g_calls,
-                                          current_floor,
-                                          current_direction);
+
+
+
+
 
     if(current_direction == DIR_UP)
     {
@@ -376,7 +365,6 @@ u8 Dispatch_GetNextFloor(void)
             }
         }
     }
-
     else if(current_direction == DIR_DOWN)
     {
         floor = current_floor;
@@ -394,7 +382,6 @@ u8 Dispatch_GetNextFloor(void)
 
     return current_floor;
 }
-
 
 
 
@@ -420,13 +407,14 @@ u8 Elevator_CalculateNextFloor(u8 floor,
 {
     current_floor = floor;
 
+
+    current_direction = DSP_NextDirection(&g_calls,
+                                          current_floor,
+                                          current_direction);
+
+
     if(direction != ((void *)0))
     {
-        current_direction =
-        DSP_NextDirection(&g_calls,
-                          current_floor,
-                          current_direction);
-
         *direction = current_direction;
     }
 
