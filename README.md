@@ -267,20 +267,6 @@ serves floor 3 first, then comes back down and picks up floor 2 in the correct
 direction. Implementing that correctly is what separates a working elevator from
 a plausible one, and TC-27 tests exactly this.
 
-### 9.3 Three-device SPI arbitration
-
-| Device | Select | Strobe semantics | Direction |
-|--------|--------|------------------|-----------|
-| 25LC256 EEPROM | `PB4` low for the whole transaction | Level | Read + write |
-| 74HC165 (×2) | `PC2` **pulsed low** *before* clocking | Pulse, then clock 16 bits | Read only |
-| 74HC595 | `PC3` **pulsed high** *after* clocking | Clock 8 bits, then pulse | Write only |
-
-```c
-typedef enum { SPI_EEPROM = 0, SPI_BUTTONS, SPI_DISPLAY } SpiDev_t;
-
-void SPI_Acquire(SpiDev_t d);   /* deassert all selects, then set up for d  */
-void SPI_Release(void);         /* deassert, bus idle                       */
-```
 
 Rules:
 1. `PB4` must be **high** whenever the 165 or the 595 is being clocked —

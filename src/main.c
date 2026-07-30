@@ -49,13 +49,13 @@ int main(void)
             switch (demo_request_index)
             {
                 case 0u:
-                    HandleUserRequest(2u, 1u);
+                    HandleUserRequest(2u,CALL_TYPE_CAR);
                     break;
                 case 1u:
-                    HandleUserRequest(0u, 0u);
+                    HandleUserRequest(0u,CALL_TYPE_HALL_UP);
                     break;
                 case 2u:
-                    HandleUserRequest(3u, 1u);
+                    HandleUserRequest(3u,CALL_TYPE_HALL_DOWN);
                     break;
                 default:
                     break;

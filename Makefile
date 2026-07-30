@@ -23,7 +23,7 @@ OBJS   := $(patsubst %.c,build/%.o,$(C_SOURCES))
 TARGET := build/firmware
 
 # Auto include folders (for #include "gpio.h" in MCL/GPIO/)
-INCLUDE_DIRS := include src Service LOGIC \
+INCLUDE_DIRS := include src \
     $(sort $(dir $(wildcard MCL/*/*.h)) $(wildcard MCL/*/*/*.h)) \
     $(sort $(dir $(wildcard HAL/*/*.h)) $(wildcard HAL/*/*/*.h))
 CFLAGS += $(addprefix -I,$(INCLUDE_DIRS))
@@ -46,15 +46,15 @@ $(TARGET).hex: $(TARGET).elf
 # .o -> .elf -> .hex : linking + hex conversion (rules above, top of file)
 
 build/%.i: %.c
-	@mkdir -p $(dir $@)
+	@if not exist "$(dir $@)" mkdir "$(dir $@)"
 	$(CC) $(CFLAGS) -E $< -o $@
 
 build/%.s: build/%.i
-	@mkdir -p $(dir $@)
+	@if not exist "$(dir $@)" mkdir "$(dir $@)"
 	$(CC) $(CFLAGS) -S $< -o $@
 
 build/%.o: build/%.s
-	@mkdir -p $(dir $@)
+	@if not exist "$(dir $@)" mkdir "$(dir $@)"
 	$(CC) $(CFLAGS) -c $< -o $@
 
 # Keep .i/.s intermediates around for inspection instead of letting make
