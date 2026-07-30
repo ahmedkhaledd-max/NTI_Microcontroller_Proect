@@ -5,8 +5,8 @@
 #include "../HAL/LCD_Hd44780/lcd_hd44780.h"
 #include "elevator_io.h"
 
-#define IO_BUZZER_PORT      GPIO_PORTB
-#define IO_BUZZER_PIN       GPIO_PIN0
+#define IO_BUZZER_PORT      GPIO_PORTD
+#define IO_BUZZER_PIN       GPIO_PIN7
 
 #define IO_LCD_ROW_STATUS   0u
 #define IO_LCD_ROW_FAULT    1u

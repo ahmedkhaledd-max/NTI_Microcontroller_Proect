@@ -17,21 +17,6 @@ void System_Update(void)
     Safety_Update();
 }
 
-void Console_Process(void)
-{
-    (void)0;
-}
-
-void Telemetry_Send(void)
-{
-    (void)0;
-}
-
-void Statistics_Save(void)
-{
-    (void)0;
-}
-
 void LogFault(uint8_h fault)
 {
     if (fault != 0u) {
