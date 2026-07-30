@@ -54,6 +54,7 @@ This modular structure simplifies maintenance, testing, and future expansion.
    passengers.
 7. Implement a fire-service recall mode with the correct override precedence.
 
+![image](C:\Project\Image\SM_Elev_proj.png)
 ---
 
 ## 4. Learning Outcomes
