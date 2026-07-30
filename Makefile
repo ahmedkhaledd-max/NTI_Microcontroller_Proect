@@ -17,13 +17,17 @@ C_SOURCES := \
     $(wildcard MCL/*/*/*.c) \
     $(wildcard HAL/*.c) \
     $(wildcard HAL/*/*.c) \
-    $(wildcard HAL/*/*/*.c)
+    $(wildcard HAL/*/*/*.c) \
+    $(wildcard LOGIC/*.c) \
+    $(wildcard LOGIC/*/*.c) \
+    $(wildcard Service/*.c)
 
 OBJS   := $(patsubst %.c,build/%.o,$(C_SOURCES))
+DEPS   := $(patsubst %.c,build/%.d,$(C_SOURCES))
 TARGET := build/firmware
 
 # Auto include folders (for #include "gpio.h" in MCL/GPIO/)
-INCLUDE_DIRS := include src \
+INCLUDE_DIRS := include src LOGIC Service \
     $(sort $(dir $(wildcard MCL/*/*.h)) $(wildcard MCL/*/*/*.h)) \
     $(sort $(dir $(wildcard HAL/*/*.h)) $(wildcard HAL/*/*/*.h))
 CFLAGS += $(addprefix -I,$(INCLUDE_DIRS))
@@ -46,23 +50,27 @@ $(TARGET).hex: $(TARGET).elf
 # .o -> .elf -> .hex : linking + hex conversion (rules above, top of file)
 
 build/%.i: %.c
-	@if not exist "$(dir $@)" mkdir "$(dir $@)"
-	$(CC) $(CFLAGS) -E $< -o $@
+	@mkdir -p "$(dir $@)"
+	$(CC) $(CFLAGS) -MMD -MP -MF $(@:.i=.d) -MT $@ -E $< -o $@
 
 build/%.s: build/%.i
-	@if not exist "$(dir $@)" mkdir "$(dir $@)"
+	@mkdir -p "$(dir $@)"
 	$(CC) $(CFLAGS) -S $< -o $@
 
 build/%.o: build/%.s
-	@if not exist "$(dir $@)" mkdir "$(dir $@)"
+	@mkdir -p "$(dir $@)"
 	$(CC) $(CFLAGS) -c $< -o $@
 
 # Keep .i/.s intermediates around for inspection instead of letting make
 # delete them as "just intermediate" files in the chain.
 .SECONDARY:
 
+# Header dependencies recorded during preprocessing, so editing a .h
+# re-runs the .c -> .i step for every source that includes it.
+-include $(DEPS)
+
 clean:
-	-if exist build rmdir /s /q build
+	-rm -rf build
 
 flash: $(TARGET).hex
 	$(AVRDUDE) -c usbasp -p $(MCU) -U flash:w:$<:i
