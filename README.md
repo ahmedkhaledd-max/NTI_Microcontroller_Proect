@@ -332,133 +332,9 @@ is the interesting part.
 
 ---
 
-## 10. Data Dictionary (required data)
+## 10. System Specifications
 
-### 10.1 Runtime data — `DD-01 CarData_t`
-
-```c
-#define FLOOR_COUNT 4u
-#define FLOOR_MASK  0x0Fu
-
-typedef struct {
-    uint16_t positionCm;      /* 0..1000                                 */
-    uint8_t  currentFloor;    /* 0..3, nearest                           */
-    uint8_t  targetFloor;     /* 0..3                                    */
-    uint8_t  doorPct;         /* 0 = closed, 100 = open                  */
-    uint16_t loadKg;          /* 0..1000                                 */
-    uint16_t currentmA;       /* hoist current                           */
-    Calls_t  calls;
-    uint8_t  dir;             /* Dir_t, current travel direction         */
-    uint8_t  lastDir;         /* for LOOK continuation                   */
-    uint8_t  state;           /* CarState_t                              */
-    uint8_t  doorState;       /* DoorState_t                             */
-    uint8_t  hoistDuty;       /* 0..100 %                                */
-    uint8_t  overload    : 1;
-    uint8_t  fireService : 1;
-    uint8_t  independent : 1;
-    uint8_t  estop       : 1;
-    uint8_t  obstruction : 1;
-    uint8_t  levelled    : 1;
-    uint8_t  reserved    : 2;
-    uint8_t  activeFault;     /* Fault_t                                 */
-    uint16_t doorDwellTicks;  /* countdown                               */
-    uint32_t tripCount;       /* lifetime journeys                       */
-    uint32_t doorCycles;      /* lifetime door cycles                    */
-    uint32_t upTimeSec;
-} CarData_t;
-```
-
-### 10.2 Persisted configuration — `DD-02 LiftCfg_t`
-
-```c
-#define LFT_MAGIC   0x4C46u      /* 'L','F'                              */
-#define LFT_VERSION 0x01u
-
-typedef struct {
-    uint16_t magic;
-    uint8_t  version;
-    uint16_t floorCm[FLOOR_COUNT];  /* 0, 300, 600, 900 — calibratable   */
-    uint8_t  levelToleranceCm;      /* ±3                                */
-    uint8_t  creepZoneCm;           /* 15                                */
-    uint8_t  slowZoneCm;            /* 60                                */
-    uint8_t  creepDutyPct;          /* 15                                */
-    uint8_t  slowDutyPct;           /* 30                                */
-    uint8_t  fullDutyPct;           /* 100                               */
-    uint16_t doorDwellSec;          /* 5                                 */
-    uint16_t doorHoldSec;           /* 15, when Door-Open is held        */
-    uint16_t doorTimeoutSec;        /* 10, travel limit                  */
-    uint16_t ratedLoadKg;           /* 800                               */
-    uint16_t overloadKg;            /* 900                               */
-    uint16_t travelTimeoutSec;      /* 30, floor-to-floor limit          */
-    uint16_t hoistOverCurrentmA;    /* 15000                             */
-    uint8_t  homeFloor;             /* 0 (G) — parking floor             */
-    uint8_t  fireFloor;             /* 0 (G) — recall floor              */
-    uint16_t parkDelaySec;          /* 300, before homing                */
-    uint32_t tripCount;
-    uint32_t doorCycles;
-    uint8_t  faultHead;
-    uint8_t  checksum;
-} LiftCfg_t;                        /* 52 bytes                          */
-```
-
-### 10.3 Enumerations — `DD-03`
-
-```c
-typedef enum { CS_INIT = 0, CS_HOMING, CS_IDLE, CS_DOOR_OPENING,
-               CS_DOOR_OPEN, CS_DOOR_CLOSING, CS_STARTING,
-               CS_MOVING, CS_SLOWING, CS_LEVELLING, CS_ARRIVED,
-               CS_OVERLOAD, CS_FIRE_RECALL, CS_FIRE_HOLD,
-               CS_FAULT, CS_ESTOP }                        CarState_t;
-
-typedef enum { DS_CLOSED = 0, DS_OPENING, DS_OPEN, DS_CLOSING,
-               DS_REVERSING, DS_JAMMED }                   DoorState_t;
-
-typedef enum { DIR_NONE = 0, DIR_UP, DIR_DOWN }            Dir_t;
-
-typedef enum { FLT_NONE = 0, FLT_ESTOP, FLT_OVERTRAVEL, FLT_TRAVEL_TIMEOUT,
-               FLT_DOOR_TIMEOUT, FLT_OVERCURRENT, FLT_POSITION_SENSOR,
-               FLT_LEVEL_FAIL, FLT_DOOR_JAM }              Fault_t;
-```
-
-### 10.4 Fault record — `DD-04 FaultRec_t`
-
-```c
-typedef struct {
-    uint8_t  fault;
-    uint32_t timeSec;
-    uint16_t positionCm;
-    uint8_t  floor;
-    uint8_t  state;
-    uint16_t loadKg;
-    uint8_t  csum;
-} FaultRec_t;                 /* 12 bytes                                */
-```
-
-### 10.5 Derived constants — `DD-05`
-
-| Constant | Value | Meaning |
-|----------|-------|---------|
-| `PWM_TOP` | 799 | 10 kHz, 800 steps |
-| `SHAFT_CM` | 1000 | Full travel |
-| `POS_SCALE` | `(raw * 1000) / 1023` | ADC → cm |
-| `LEVEL_TOL_CM` | 3 | Levelling window |
-| `CREEP_CM` | 15 | Creep zone |
-| `SLOW_CM` | 60 | Slowdown zone |
-| `ACCEL_TICKS` | 100 | 1 s ramp to full duty |
-| `DOOR_DWELL_TICKS` | 500 | 5 s open dwell |
-| `DOOR_HOLD_TICKS` | 1500 | 15 s with Door-Open held |
-| `DOOR_TIMEOUT_TICKS` | 1000 | 10 s door travel limit |
-| `TRAVEL_TIMEOUT_TICKS` | 3000 | 30 s floor-to-floor limit |
-| `REOPEN_TICKS` | 300 | 3 s re-dwell after an obstruction |
-| `PARK_DELAY_TICKS` | 30000 | 300 s idle before homing |
-| `BTN_SCAN_HZ` | 20 | 74HC165 read rate |
-| `GONG_TICKS` | 50 | 500 ms arrival chime |
-
----
-
-## 11. System Specifications
-
-### 11.1 Shaft geometry
+### 10.1 Shaft geometry
 
 | Floor | Label | Position | Hall buttons |
 |:-----:|:-----:|---------:|--------------|
@@ -470,7 +346,7 @@ typedef struct {
 The floor positions are **calibratable** (`floorCm[]` in EEPROM) — a real
 installation never has perfectly even floor spacing.
 
-### 11.2 Motion
+### 10.2 Motion
 
 | Parameter | Value |
 |-----------|-------|
@@ -482,7 +358,7 @@ installation never has perfectly even floor spacing.
 | Acceleration ramp | 1 s to full duty |
 | Floor-to-floor timeout | 30 s |
 
-### 11.3 Door
+### 10.3 Door
 
 | Parameter | Value |
 |-----------|-------|
@@ -493,7 +369,7 @@ installation never has perfectly even floor spacing.
 | Door travel timeout | 10 s → `FLT_DOOR_TIMEOUT` |
 | Consecutive reversals before jam | 3 → `DS_JAMMED` |
 
-### 11.4 Load
+### 10.4 Load
 
 | Band | Range | Behaviour |
 |------|-------|-----------|
@@ -504,7 +380,7 @@ installation never has perfectly even floor spacing.
 The car **must not** move while overloaded, but it **must** allow the doors to
 open so passengers can get out. An overload that traps people is a defect.
 
-### 11.5 Safety precedence
+### 10.5 Safety precedence
 
 | Rank | Condition | Effect |
 |:----:|-----------|--------|
@@ -521,9 +397,9 @@ three adjacent pairs.
 
 ---
 
-## 12. Inputs & Outputs
+## 11. Inputs & Outputs
 
-### 12.1 Inputs
+### 11.1 Inputs
 
 | ID | Name | Channel | Type | Sample rate |
 |----|------|---------|------|-------------|
@@ -537,7 +413,7 @@ three adjacent pairs.
 | IN-8 | Fire service | `PD6` | Digital, polled | 10 Hz |
 | IN-9 | Console | USART RX | ASCII line | Interrupt |
 
-### 12.2 Outputs
+### 11.2 Outputs
 
 | ID | Name | Pin | Type | Meaning |
 |----|------|-----|------|---------|
@@ -554,7 +430,7 @@ three adjacent pairs.
 
 ---
 
-## 13. | Functional Requirement | Responsible Module |
+## 12. | Functional Requirement | Responsible Module |
 |------------------------|--------------------|
 | FR-01 Button Acquisition | Input & Display |
 | FR-02 Position Measurement | Motion Control |
@@ -586,7 +462,7 @@ three adjacent pairs.
 
 ---
 
-## 14. Non-Functional Requirements
+## 13. Non-Functional Requirements
 
 | ID | Requirement |
 |----|-------------|
@@ -609,7 +485,7 @@ three adjacent pairs.
 
 ---
 
-## 15. Operating Modes
+## 14. Operating Modes
 
 | State | Hoist | Door | Calls accepted | Display |
 |-------|-------|------|:--------------:|---------|
@@ -630,7 +506,7 @@ three adjacent pairs.
 
 ---
 
-## 16. System Flow
+## 15. System Flow
 
 ```
    ┌──────────────┐
@@ -681,9 +557,9 @@ three adjacent pairs.
 
 ---
 
-## 17. State Machine
+## 16. State Machine
 
-### 17.1 Car FSM
+### 16.1 Car FSM
 
 ```
                     ┌───────────┐
@@ -732,7 +608,7 @@ three adjacent pairs.
      load > overloadKg      ──▶ CS_OVERLOAD     (rank 6, at a floor only)
 ```
 
-### 17.2 Door FSM
+### 16.2 Door FSM
 
 ```
         ┌────────────┐  open cmd   ┌─────────────┐
@@ -756,7 +632,7 @@ three adjacent pairs.
         └──────────────┘
 ```
 
-### 17.3 Car transition table
+### 16.3 Car transition table
 
 | # | From | Event / guard | To | Actions |
 |---|------|---------------|----|---------|
@@ -791,11 +667,11 @@ three adjacent pairs.
 
 ---
 
-## 18. UART Protocol
+## 17. UART Protocol
 
 **Link:** 9600 8N1. Device sends `\r\n`; accepts `\r`, `\n`, `\r\n`.
 
-### 18.1 Telemetry frame (every **2 s**)
+### 17.1 Telemetry frame (every **2 s**)
 
 ```
 $EL,F=2,P=612,D=UP,DR=0,LD=420,I=6200,CC=4,HU=8,HD=2,ST=MOV,FT=0,TR=1204,DC=2408,UP=7200*3F
@@ -816,7 +692,7 @@ $EL,F=2,P=612,D=UP,DR=0,LD=420,I=6200,CC=4,HU=8,HD=2,ST=MOV,FT=0,TR=1204,DC=2408
 | `UP` | Uptime s |
 | `*3F` | XOR checksum between `$` and `*` |
 
-### 18.2 Command set
+### 17.2 Command set
 
 | Command | Response | Effect |
 |---------|----------|--------|
@@ -846,7 +722,7 @@ $EL,F=2,P=612,D=UP,DR=0,LD=420,I=6200,CC=4,HU=8,HD=2,ST=MOV,FT=0,TR=1204,DC=2408
 | `PAGE <0-1>` | `OK` | LCD page |
 | `HELP` | command list | |
 
-### 18.3 Asynchronous events
+### 17.3 Asynchronous events
 
 ```
 !EVT,BOOT
@@ -872,11 +748,11 @@ $EL,F=2,P=612,D=UP,DR=0,LD=420,I=6200,CC=4,HU=8,HD=2,ST=MOV,FT=0,TR=1204,DC=2408
 
 ---
 
-## 19. EEPROM Data Layout
+## 18. EEPROM Data Layout
 
 **Device:** 25LC256, SPI Mode 0, `SS` = `PB4`, page size 64 bytes.
 
-### 19.1 Memory map
+### 18.1 Memory map
 
 | Address | Size | Field | Type | Default |
 |---------|:----:|-------|------|:-------:|
@@ -910,7 +786,7 @@ $EL,F=2,P=612,D=UP,DR=0,LD=420,I=6200,CC=4,HU=8,HD=2,ST=MOV,FT=0,TR=1204,DC=2408
 | `0x0044` – `0x004F` | 12 | reserved | — | — |
 | `0x0050` – `0x010F` | 192 | Fault ring: 16 × 12-byte `FaultRec_t` | — | `0xFF` |
 
-### 19.2 Write discipline
+### 18.2 Write discipline
 
 | Block | When written |
 |-------|--------------|
@@ -921,7 +797,7 @@ $EL,F=2,P=612,D=UP,DR=0,LD=420,I=6200,CC=4,HU=8,HD=2,ST=MOV,FT=0,TR=1204,DC=2408
 
 ---
 
-## 20. Task Scheduling
+## 19. Task Scheduling
 
 | ID | Task | Period | Offset | Budget | Work |
 |----|------|:------:|:------:|:------:|------|
@@ -946,7 +822,7 @@ one cycle. Show that a skipped button read still meets the 20 Hz minimum.
 
 ---
 
-## 21. Testing Requirements
+## 20. Testing Requirements
 
 Scripted call sequences via the `CALL` command make this plan repeatable.
 
@@ -1024,7 +900,7 @@ Scripted call sequences via the `CALL` command make this plan repeatable.
 
 ---
 
-## 22. Bonus Features
+## 21. Bonus Features
 
 Maximum **+20**; final score capped at 100.
 
@@ -1041,7 +917,7 @@ Maximum **+20**; final score capped at 100.
 
 ---
 
-## 23. Deliverables
+## 22. Deliverables
 
 | # | Item | Detail |
 |---|------|--------|
@@ -1058,7 +934,7 @@ Maximum **+20**; final score capped at 100.
 
 ---
 
-## 24. Evaluation Rubric
+## 23. Evaluation Rubric
 
 | Item | Marks | Full-mark criteria |
 |------|:-----:|--------------------|
