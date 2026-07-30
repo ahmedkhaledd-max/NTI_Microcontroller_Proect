@@ -1,0 +1,141 @@
+	.file	"elevator_safety.c"
+__SP_H__ = 0x3e
+__SP_L__ = 0x3d
+__SREG__ = 0x3f
+__tmp_reg__ = 0
+__zero_reg__ = 1
+	.text
+.global	Elevator_Safety_Init
+	.type	Elevator_Safety_Init, @function
+Elevator_Safety_Init:
+/* prologue: function */
+/* frame size = 0 */
+/* stack size = 0 */
+.L__stack_usage = 0
+	sts current_fault+1,__zero_reg__
+	sts current_fault,__zero_reg__
+/* epilogue start */
+	ret
+	.size	Elevator_Safety_Init, .-Elevator_Safety_Init
+.global	Elevator_CheckFaults
+	.type	Elevator_CheckFaults, @function
+Elevator_CheckFaults:
+/* prologue: function */
+/* frame size = 0 */
+/* stack size = 0 */
+.L__stack_usage = 0
+	lds r24,current_fault
+	lds r25,current_fault+1
+/* epilogue start */
+	ret
+	.size	Elevator_CheckFaults, .-Elevator_CheckFaults
+.global	Elevator_LogFault
+	.type	Elevator_LogFault, @function
+Elevator_LogFault:
+/* prologue: function */
+/* frame size = 0 */
+/* stack size = 0 */
+.L__stack_usage = 0
+	sts current_fault+1,r25
+	sts current_fault,r24
+/* epilogue start */
+	ret
+	.size	Elevator_LogFault, .-Elevator_LogFault
+.global	Elevator_SendTelemetry
+	.type	Elevator_SendTelemetry, @function
+Elevator_SendTelemetry:
+/* prologue: function */
+/* frame size = 0 */
+/* stack size = 0 */
+.L__stack_usage = 0
+/* epilogue start */
+	ret
+	.size	Elevator_SendTelemetry, .-Elevator_SendTelemetry
+.global	Safety_Init
+	.type	Safety_Init, @function
+Safety_Init:
+/* prologue: function */
+/* frame size = 0 */
+/* stack size = 0 */
+.L__stack_usage = 0
+	sts current_fault+1,__zero_reg__
+	sts current_fault,__zero_reg__
+/* epilogue start */
+	ret
+	.size	Safety_Init, .-Safety_Init
+.global	Safety_Update
+	.type	Safety_Update, @function
+Safety_Update:
+/* prologue: function */
+/* frame size = 0 */
+/* stack size = 0 */
+.L__stack_usage = 0
+/* epilogue start */
+	ret
+	.size	Safety_Update, .-Safety_Update
+.global	Emergency_Stop
+	.type	Emergency_Stop, @function
+Emergency_Stop:
+/* prologue: function */
+/* frame size = 0 */
+/* stack size = 0 */
+.L__stack_usage = 0
+	ldi r24,lo8(1)
+	ldi r25,0
+	sts current_fault+1,r25
+	sts current_fault,r24
+/* epilogue start */
+	ret
+	.size	Emergency_Stop, .-Emergency_Stop
+.global	Fault_Set
+	.type	Fault_Set, @function
+Fault_Set:
+/* prologue: function */
+/* frame size = 0 */
+/* stack size = 0 */
+.L__stack_usage = 0
+	ldi r25,0
+	sts current_fault+1,r25
+	sts current_fault,r24
+/* epilogue start */
+	ret
+	.size	Fault_Set, .-Fault_Set
+.global	Fault_Clear
+	.type	Fault_Clear, @function
+Fault_Clear:
+/* prologue: function */
+/* frame size = 0 */
+/* stack size = 0 */
+.L__stack_usage = 0
+	lds r18,current_fault
+	lds r19,current_fault+1
+	cp r24,r18
+	cpc __zero_reg__,r19
+	brne .L9
+	sts current_fault+1,__zero_reg__
+	sts current_fault,__zero_reg__
+.L9:
+/* epilogue start */
+	ret
+	.size	Fault_Clear, .-Fault_Clear
+.global	Fault_IsActive
+	.type	Fault_IsActive, @function
+Fault_IsActive:
+/* prologue: function */
+/* frame size = 0 */
+/* stack size = 0 */
+.L__stack_usage = 0
+	ldi r24,lo8(1)
+	lds r18,current_fault
+	lds r19,current_fault+1
+	or r18,r19
+	brne .L12
+	ldi r24,0
+.L12:
+/* epilogue start */
+	ret
+	.size	Fault_IsActive, .-Fault_IsActive
+	.local	current_fault
+	.comm	current_fault,2,1
+	.ident	"GCC: (GNU) 7.3.0"
+.global __do_clear_bss
