@@ -1,9 +1,10 @@
 #ifndef ELEVATOR_MOTION_H
 #define ELEVATOR_MOTION_H
 
+
 #include <stdint.h>
-#include <stdbool.h>
 #include "../Service/STD_Types.h"
+#include "../MCL/ADC/adc_interface.h"
 
 #define MOTION_FLOORS               4u
 #define MOTION_POSITION_MAX_CM    900u
@@ -25,7 +26,6 @@ typedef enum
 typedef enum
 {
     DOOR_CLOSED = 0,
-    DOOR_OPENED,
     DOOR_OPENING,
     DOOR_CLOSING
 } Door_State_t;
@@ -35,10 +35,6 @@ void Motion_Update(void);
 
 void Motion_GoToFloor(uint8_t floor);
 void Motion_Stop(void);
-
-uint16_t Motion_GetPosition(void);
-uint8_t Motion_GetFloor(void);
-
 void Door_Open(void);
 void Door_Close(void);
 
