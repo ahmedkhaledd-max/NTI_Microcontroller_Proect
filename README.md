@@ -951,6 +951,8 @@ Maximum **+20**; final score capped at 100.
 | Documentation & demo | 10 | Dispatch and safety-precedence documents present; live LOOK trace |
 | **Total** | **100** | Bonus up to +20, capped at 100 |
 
+
+
 ---
 
 *Prepared by Ahmed Ellamie | ahmed.ellamiee@gmail.com*
