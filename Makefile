@@ -17,10 +17,7 @@ C_SOURCES := \
     $(wildcard MCL/*/*/*.c) \
     $(wildcard HAL/*.c) \
     $(wildcard HAL/*/*.c) \
-    $(wildcard HAL/*/*/*.c) \
-    $(wildcard LOGIC/*.c) \
-    $(wildcard LOGIC/*/*.c) \
-    $(wildcard Service/*.c)
+    $(wildcard HAL/*/*/*.c)
 
 OBJS   := $(patsubst %.c,build/%.o,$(C_SOURCES))
 DEPS   := $(patsubst %.c,build/%.d,$(C_SOURCES))
