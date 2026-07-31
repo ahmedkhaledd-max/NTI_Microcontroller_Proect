@@ -17,8 +17,13 @@ C_SOURCES := \
     $(wildcard MCL/*/*/*.c) \
     $(wildcard HAL/*.c) \
     $(wildcard HAL/*/*.c) \
-    $(wildcard HAL/*/*/*.c)
-
+    $(wildcard HAL/*/*/*.c) \
+	$(wildcard LOGIC/*.c) \
+    $(wildcard LOGIC/*/*.c) \
+    $(wildcard LOGIC/*/*/*.c)\
+	$(wildcard Service/*.c) \
+    $(wildcard Service/*/*.c) \
+    $(wildcard servise/*/*/*.c)
 OBJS   := $(patsubst %.c,build/%.o,$(C_SOURCES))
 TARGET := build/firmware
 
