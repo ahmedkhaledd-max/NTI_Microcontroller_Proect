@@ -1,5 +1,6 @@
 #include <stdint.h>
 #include "../Service/STD_Types.h"
+#include "../MCL/GPIO/gpio_interface.h"
 #include "../MCL/ADC/adc_interface.h"
 #include "elevator_io.h"
 #include "elevator_motion.h"
@@ -17,47 +18,75 @@ void Motion_Init(void)
 
 void Motion_Update(void)
 {
-    uint16_h adcHoistVal = 0u;
-    uint16_h adcDoorVal  = 0u;
+    uint16_h adcDoorVal = 0u;
 
-    if (ADC_ReadChannelBlocking(ADC_CAR_POSITION_CH, &adcHoistVal) == E_OK)
-    {
-        /* Process Hoist Position */
-    }
-
-    if (ADC_ReadChannelBlocking(ADC_DOOR_POSITION_CH, &adcDoorVal) == E_OK)
-    {
-        g_doorPosition = adcDoorVal;
-    }
+    /* قراءة موضع الباب من ADC3 */
+    adcDoorVal = ADC_Read(ADC_DOOR_POSITION_CH);
+    g_doorPosition = adcDoorVal;
 }
 
 void Motion_GoToFloor(uint8_h floor)
 {
-    if (floor < MOTION_FLOORS)
+    uint8_h current_floor = Elevator_GetCurPosition();
+
+    if (floor > current_floor)
     {
         g_motionState = MOTION_MOVING_UP;
+        /* تشغيل موتور الرفع للأعلى */
+        (void)GPIO_SetPinValue(L298_PORT, HOIST_IN1_PIN, PIN_HIGH);
+        (void)GPIO_SetPinValue(L298_PORT, HOIST_IN2_PIN, PIN_LOW);
+    }
+    else if (floor < current_floor)
+    {
+        g_motionState = MOTION_MOVING_DOWN;
+        /* تشغيل موتور الرفع للأسفل */
+        (void)GPIO_SetPinValue(L298_PORT, HOIST_IN1_PIN, PIN_LOW);
+        (void)GPIO_SetPinValue(L298_PORT, HOIST_IN2_PIN, PIN_HIGH);
     }
 }
 
 void Motion_Stop(void)
 {
     g_motionState = MOTION_STOPPED;
+    /* إيقاف موتور الرفع */
+    (void)GPIO_SetPinValue(L298_PORT, HOIST_IN1_PIN, PIN_LOW);
+    (void)GPIO_SetPinValue(L298_PORT, HOIST_IN2_PIN, PIN_LOW);
 }
 
 void Door_Open(void)
 {
     g_doorState = DOOR_OPENING;
+    /* فتح الباب */
+    (void)GPIO_SetPinValue(L298_PORT, DOOR_IN3_PIN, PIN_HIGH);
+    (void)GPIO_SetPinValue(L298_PORT, DOOR_IN4_PIN, PIN_LOW);
 }
 
 void Door_Close(void)
 {
     g_doorState = DOOR_CLOSING;
+    /* إغلاق الباب */
+    (void)GPIO_SetPinValue(L298_PORT, DOOR_IN3_PIN, PIN_LOW);
+    (void)GPIO_SetPinValue(L298_PORT, DOOR_IN4_PIN, PIN_HIGH);
 }
 
 /* --- دوال الـ Wrapper لتوافق الاستدعاء مع main.c --- */
-void Elevator_Motion_Init(void) { Motion_Init(); }
-uint8_h Elevator_GetCurPosition(void) { return 0u; }
-void Elevator_OpenDoor(void) { Door_Open(); }
-void Elevator_CloseDoor(void) { Door_Close(); }
+void Elevator_Motion_Init(void) 
+{ 
+    Motion_Init(); 
+}
+
+uint8_h Elevator_GetCurPosition(void) 
+{ 
+    uint16_h adc_pos = ADC_Read(ADC_CAR_POSITION_CH);
+    
+    /* تحويل إشارة المقاومة المتغيرة لمستويات الأدوار */
+    if (adc_pos < 250u)       return 0u;
+    else if (adc_pos < 500u)  return 1u;
+    else if (adc_pos < 750u)  return 2u;
+    else                      return 3u;
+}
+
+void Elevator_OpenDoor(void)   { Door_Open(); }
+void Elevator_CloseDoor(void)  { Door_Close(); }
 void Elevator_StopMotion(void) { Motion_Stop(); }
 void Elevator_MoveToFloor(uint8_h floor) { Motion_GoToFloor(floor); }

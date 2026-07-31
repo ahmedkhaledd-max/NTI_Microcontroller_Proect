@@ -58,6 +58,27 @@ IO_DelayMs:
 	std Y+1,r18
 	rjmp .L3
 	.size	IO_DelayMs, .-IO_DelayMs
+.global	ADC_Read
+	.type	ADC_Read, @function
+ADC_Read:
+/* prologue: function */
+/* frame size = 0 */
+/* stack size = 0 */
+.L__stack_usage = 0
+	in r25,0x7
+	andi r25,lo8(-16)
+	andi r24,lo8(7)
+	or r25,r24
+	out 0x7,r25
+	sbi 0x6,6
+.L7:
+	sbic 0x6,6
+	rjmp .L7
+	in r24,0x4
+	in r25,0x4+1
+/* epilogue start */
+	ret
+	.size	ADC_Read, .-ADC_Read
 	.section	.rodata
 .LC0:
 	.byte	-128
@@ -83,16 +104,16 @@ IO_Init:
 	push r29
 	in r28,__SP_L__
 	in r29,__SP_H__
-	sbiw r28,10
+	sbiw r28,12
 	in __tmp_reg__,__SREG__
 	cli
 	out __SP_H__,r29
 	out __SREG__,__tmp_reg__
 	out __SP_L__,r28
 /* prologue: function */
-/* frame size = 10 */
-/* stack size = 20 */
-.L__stack_usage = 20
+/* frame size = 12 */
+/* stack size = 22 */
+.L__stack_usage = 22
 	ldi r20,0
 	ldi r22,0
 	ldi r24,lo8(3)
@@ -178,6 +199,29 @@ IO_Init:
 	ldi r22,lo8(7)
 	ldi r24,0
 	call GPIO_SetPinValue
+	ldi r20,0
+	ldi r22,0
+	ldi r24,0
+	call GPIO_SetPinDirection
+	ldi r20,0
+	ldi r22,lo8(1)
+	ldi r24,0
+	call GPIO_SetPinDirection
+	ldi r20,0
+	ldi r22,lo8(2)
+	ldi r24,0
+	call GPIO_SetPinDirection
+	ldi r20,0
+	ldi r22,lo8(3)
+	ldi r24,0
+	call GPIO_SetPinDirection
+	ldi r24,lo8(1)
+	std Y+11,r24
+	ldi r24,lo8(7)
+	std Y+12,r24
+	movw r24,r28
+	adiw r24,11
+	call ADC_Init
 	ldi r16,lo8(g_inputPins)
 	ldi r17,hi8(g_inputPins)
 	ldi r24,lo8(g_buttonEvents)
@@ -188,7 +232,7 @@ IO_Init:
 	mov r14,r25
 	ldi r25,hi8(g_lastButtonState)
 	mov r15,r25
-.L7:
+.L10:
 	movw r30,r16
 	ldd r10,Z+1
 	ld r11,Z
@@ -212,12 +256,12 @@ IO_Init:
 	ldi r31,hi8(g_inputPins+30)
 	cpi r16,lo8(g_inputPins+30)
 	cpc r17,r31
-	brne .L7
+	brne .L10
 	ldi r24,lo8(g_lcdHandle)
 	ldi r25,hi8(g_lcdHandle)
 	call LCD_Aip31068_Init
 /* epilogue start */
-	adiw r28,10
+	adiw r28,12
 	in __tmp_reg__,__SREG__
 	cli
 	out __SP_H__,r29
@@ -256,7 +300,7 @@ IO_Update:
 	mov r15,r24
 	ldi r29,0
 	ldi r28,0
-.L11:
+.L14:
 	movw r30,r16
 	ldd r22,Z+1
 	ld r24,Z
@@ -264,14 +308,14 @@ IO_Update:
 	movw r30,r14
 	ld r25,Z
 	cpi r25,lo8(1)
-	brne .L10
+	brne .L13
 	cpse r24,__zero_reg__
-	rjmp .L10
+	rjmp .L13
 	movw r30,r28
 	subi r30,lo8(-(g_buttonEvents))
 	sbci r31,hi8(-(g_buttonEvents))
 	st Z,r25
-.L10:
+.L13:
 	movw r30,r14
 	st Z+,r24
 	movw r14,r30
@@ -280,7 +324,7 @@ IO_Update:
 	sbci r17,-1
 	cpi r28,15
 	cpc r29,__zero_reg__
-	brne .L11
+	brne .L14
 /* epilogue start */
 	pop r29
 	pop r28
@@ -298,20 +342,20 @@ IO_GetButtonEvent:
 /* stack size = 0 */
 .L__stack_usage = 0
 	cpi r24,lo8(15)
-	brsh .L15
+	brsh .L18
 	mov r30,r24
 	ldi r31,0
 	subi r30,lo8(-(g_buttonEvents))
 	sbci r31,hi8(-(g_buttonEvents))
 	ld r24,Z
 	tst r24
-	breq .L13
+	breq .L16
 	st Z,__zero_reg__
 	ldi r24,lo8(1)
 	ret
-.L15:
+.L18:
 	ldi r24,0
-.L13:
+.L16:
 /* epilogue start */
 	ret
 	.size	IO_GetButtonEvent, .-IO_GetButtonEvent
@@ -345,23 +389,23 @@ Gong_Play:
 	clr r15
 	inc r15
 	cpi r28,lo8(1)
-	breq .L22
+	breq .L25
 	ldi r16,lo8(100)
 	ldi r17,0
 	ldi r18,lo8(100)
 	mov r14,r18
 	mov r15,__zero_reg__
 	cpi r28,lo8(2)
-	breq .L22
+	breq .L25
 	ldi r16,lo8(70)
 	ldi r17,0
 	ldi r25,lo8(70)
 	mov r14,r25
 	mov r15,__zero_reg__
 	ldi r28,lo8(3)
-.L22:
+.L25:
 	ldi r29,0
-.L24:
+.L27:
 	ldi r20,lo8(1)
 	ldi r22,lo8(7)
 	ldi r24,lo8(3)
@@ -376,7 +420,7 @@ Gong_Play:
 	call IO_DelayMs
 	subi r29,lo8(-(1))
 	cpse r28,r29
-	rjmp .L24
+	rjmp .L27
 /* epilogue start */
 	pop r29
 	pop r28

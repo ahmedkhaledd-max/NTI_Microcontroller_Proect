@@ -11,10 +11,6 @@
 #define MOTION_POSITION_MAX_CM     900u
 #define MOTION_POSITION_STEP_CM    300u
 
-/* ربط قنوات الـ ADC بقنوات الـ Driver بدون تكرار */
-#define ADC_CAR_POSITION_CH        ADC_CHANNEL0
-#define ADC_DOOR_POSITION_CH       ADC_CHANNEL1
-
 typedef enum {
     MOTION_IDLE = 0,
     MOTION_MOVING_UP,

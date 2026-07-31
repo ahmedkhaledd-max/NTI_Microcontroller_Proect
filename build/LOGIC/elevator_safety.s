@@ -20,51 +20,24 @@ Elevator_Safety_Init:
 .global	Elevator_CheckFaults
 	.type	Elevator_CheckFaults, @function
 Elevator_CheckFaults:
-	push r28
-	push r29
-	rcall .
-	rcall .
-	in r28,__SP_L__
-	in r29,__SP_H__
 /* prologue: function */
-/* frame size = 4 */
-/* stack size = 6 */
-.L__stack_usage = 6
-	std Y+4,__zero_reg__
-	std Y+3,__zero_reg__
-	std Y+2,__zero_reg__
-	std Y+1,__zero_reg__
-	movw r20,r28
-	subi r20,-4
-	sbci r21,-1
+/* frame size = 0 */
+/* stack size = 0 */
+.L__stack_usage = 0
 	ldi r22,lo8(5)
 	ldi r24,lo8(2)
-	call GPIO_SetPinValue
-	ldd r24,Y+4
-	cpi r24,lo8(1)
-	brne .L3
+	call GPIO_GetPinStatus
+	cpse r24,__zero_reg__
+	rjmp .L3
 	ldi r24,lo8(1)
 	ldi r25,0
 .L7:
 	sts current_fault+1,r25
 	sts current_fault,r24
-.L2:
-/* epilogue start */
-	pop __tmp_reg__
-	pop __tmp_reg__
-	pop __tmp_reg__
-	pop __tmp_reg__
-	pop r29
-	pop r28
 	ret
 .L3:
-	movw r22,r28
-	subi r22,-1
-	sbci r23,-1
 	ldi r24,lo8(1)
-	call ADC_ReadChannelBlocking
-	ldd r24,Y+1
-	ldd r25,Y+2
+	call ADC_Read
 	cpi r24,33
 	sbci r25,3
 	brlo .L5
@@ -72,15 +45,11 @@ Elevator_CheckFaults:
 	ldi r25,0
 	rjmp .L7
 .L5:
-	movw r20,r28
-	subi r20,-3
-	sbci r21,-1
 	ldi r22,lo8(7)
 	ldi r24,lo8(1)
-	call GPIO_SetPinValue
-	ldd r24,Y+3
-	cpi r24,lo8(1)
-	brne .L6
+	call GPIO_GetPinStatus
+	cpse r24,__zero_reg__
+	rjmp .L6
 	ldi r24,lo8(2)
 	ldi r25,0
 	rjmp .L7
@@ -89,7 +58,8 @@ Elevator_CheckFaults:
 	sts current_fault,__zero_reg__
 	ldi r25,0
 	ldi r24,0
-	rjmp .L2
+/* epilogue start */
+	ret
 	.size	Elevator_CheckFaults, .-Elevator_CheckFaults
 .global	Elevator_LogFault
 	.type	Elevator_LogFault, @function

@@ -12,29 +12,31 @@ void Elevator_Safety_Init(void)
 
 FaultType_t Elevator_CheckFaults(void) 
 {
-    u8 emerg_pin_val = PIN_LOW;
-    u8 door_edge_pin_val = PIN_LOW;
+    u8 emerg_pin_val = PIN_HIGH;
+    u8 door_edge_pin_val = PIN_HIGH;
     uint16_h load_adc_val = 0u;
 
-    /* 1. فحص زر الطوارئ (Emergency Stop) الموصل على البن PC5 */
-    (void)GPIO_SetPinValue(GPIO_PORTC, GPIO_PIN5, &emerg_pin_val);
-    if (emerg_pin_val == PIN_HIGH) 
+    /* 1. فحص زر الطوارئ (Emergency Stop) الموصل على البن PC5
+       ملاحظة: السويتش يُعطي PIN_LOW عند تفعيل الطوارئ */
+    emerg_pin_val = (u8)GPIO_GetPinStatus(GPIO_PORTC, GPIO_PIN5);
+    if (emerg_pin_val == PIN_LOW) 
     {
         current_fault = FAULT_EMERGENCY_STOP_ID;
         return current_fault;
     }
 
-    /* 2. فحص حساس الوزن (Car Load) الموصل على PA1 عبر قناة الـ ADC1 */
-    (void)ADC_ReadChannelBlocking(ADC_CHANNEL1, &load_adc_val);
+    /* 2. فحص حساس الوزن (Car Load) الموصل على PA1 عبر قناة الـ ADC (Channel 1) */
+    load_adc_val = ADC_Read(ADC_CAR_LOAD_CH);
     if (load_adc_val > OVERLOAD_ADC_THRESHOLD) 
     {
         current_fault = FAULT_OVERLOAD_ID;
         return current_fault;
     }
 
-    /* 3. فحص عائق الباب (Door Safety Edge) الموصل على البن PB7 */
-    (void)GPIO_SetPinValue(GPIO_PORTB, GPIO_PIN7, &door_edge_pin_val);
-    if (door_edge_pin_val == PIN_HIGH) 
+    /* 3. فحص عائق الباب (Door Safety Edge) الموصل على البن PB7
+       ملاحظة: السويتش يُعطي PIN_LOW عند تفعيله */
+    door_edge_pin_val = (u8)GPIO_GetPinStatus(GPIO_PORTB, GPIO_PIN7);
+    if (door_edge_pin_val == PIN_LOW) 
     {
         current_fault = FAULT_DOOR_OBSTRUCTION_ID;
         return current_fault;

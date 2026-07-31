@@ -4,8 +4,11 @@
 #include "../LOGIC/elevator_safety.h"
 #include "elevator_io.h"
 
-#define DOOR_OPEN_TIME      200u
-#define DOOR_CLOSE_TIME     100u
+/* إذا كنت تستخدم AVR GCC */
+#include <util/delay.h> 
+
+#define DOOR_OPEN_TIME      100u  /* مع delay_ms(10) هذا يعادل ثانية تقريباً */
+#define DOOR_CLOSE_TIME     50u
 
 static void Process_Inputs(void)
 {
@@ -100,6 +103,7 @@ int main(void)
             Gong_Play(3u);
             Update_LEDs(DIR_STOP, fault);
             Elevator_SendTelemetry();
+            _delay_ms(10);
             continue;
         }
         else if (elevator_state == STATE_EMERGENCY)
@@ -127,6 +131,10 @@ int main(void)
 
             case STATE_MOVING:
                 Update_LEDs(direction, FAULT_NONE);
+                
+                /* استمرار إعطاء أمر الحركة للموتور طالما لم نصل */
+                Elevator_MoveToFloor(target_floor);
+
                 if (current_floor == target_floor)
                 {
                     Elevator_StopMotion();
@@ -152,6 +160,7 @@ int main(void)
             case STATE_DOOR_CLOSING:
                 if (door_timer >= DOOR_CLOSE_TIME)
                 {
+                    Elevator_StopMotion(); /* إيقاف إشارة الموتور بعد نهاية وقت الإغلاق */
                     elevator_state = STATE_IDLE;
                 }
                 break;
@@ -169,6 +178,9 @@ int main(void)
         }
 
         Elevator_SendTelemetry();
+        
+        /* تأخير بسيط لاستقرار المحاكاة في SimulIDE وقراءة الوقت بانتظام */
+        _delay_ms(10); 
     }
 
     return 0;

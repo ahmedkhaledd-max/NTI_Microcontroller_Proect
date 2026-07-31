@@ -48,7 +48,7 @@ typedef enum
 # 5 "LOGIC/elevator_safety.h" 2
 # 1 "c:\\users\\hp\\.platformio\\packages\\toolchain-atmelavr\\lib\\gcc\\avr\\7.3.0\\include\\stdbool.h" 1 3 4
 # 6 "LOGIC/elevator_safety.h" 2
-# 14 "LOGIC/elevator_safety.h"
+# 15 "LOGIC/elevator_safety.h"
 typedef enum {
     FAULT_NONE = 0,
     FAULT_EMERGENCY_STOP_ID,
@@ -63,9 +63,9 @@ void Emergency_Stop(void);
 void Fault_Set(uint8_h id);
 void Fault_Clear(uint8_h id);
 
-# 27 "LOGIC/elevator_safety.h" 3 4
+# 28 "LOGIC/elevator_safety.h" 3 4
 _Bool 
-# 27 "LOGIC/elevator_safety.h"
+# 28 "LOGIC/elevator_safety.h"
     Fault_IsActive(void);
 
 void Elevator_Safety_Init(void);
@@ -277,9 +277,9 @@ typedef uint64_t uintmax_t;
 # 6 "LOGIC/../LOGIC/elevator_io.h" 2
 # 1 "LOGIC/../LOGIC/../MCL/GPIO/gpio_interface.h" 1
 # 7 "LOGIC/../LOGIC/elevator_io.h" 2
-# 44 "LOGIC/../LOGIC/elevator_io.h"
+# 50 "LOGIC/../LOGIC/elevator_io.h"
 
-# 44 "LOGIC/../LOGIC/elevator_io.h"
+# 50 "LOGIC/../LOGIC/elevator_io.h"
 typedef enum {
     IO_BTN_CAR_CALL_G = 0,
     IO_BTN_CAR_CALL_1,
@@ -311,6 +311,10 @@ void IO_Update(void);
 uint8_h IO_GetButtonEvent(uint8_h id);
 
 
+
+uint16_h ADC_Read(uint8_h channel);
+
+
 void IO_SetLedState(uint8_h ledPin, uint8_h state);
 void IO_SetHoistMotor(uint8_h state);
 void IO_SetDoorMotor(uint8_h state);
@@ -331,20 +335,21 @@ void Elevator_Safety_Init(void)
 
 FaultType_t Elevator_CheckFaults(void)
 {
-    u8 emerg_pin_val = PIN_LOW;
-    u8 door_edge_pin_val = PIN_LOW;
+    u8 emerg_pin_val = PIN_HIGH;
+    u8 door_edge_pin_val = PIN_HIGH;
     uint16_h load_adc_val = 0u;
 
 
-    (void)GPIO_SetPinValue(2, 5, &emerg_pin_val);
-    if (emerg_pin_val == PIN_HIGH)
+
+    emerg_pin_val = (u8)GPIO_GetPinStatus(2, 5);
+    if (emerg_pin_val == PIN_LOW)
     {
         current_fault = FAULT_EMERGENCY_STOP_ID;
         return current_fault;
     }
 
 
-    (void)ADC_ReadChannelBlocking(1, &load_adc_val);
+    load_adc_val = ADC_Read(1u);
     if (load_adc_val > 800u)
     {
         current_fault = FAULT_OVERLOAD_ID;
@@ -352,8 +357,9 @@ FaultType_t Elevator_CheckFaults(void)
     }
 
 
-    (void)GPIO_SetPinValue(1, 7, &door_edge_pin_val);
-    if (door_edge_pin_val == PIN_HIGH)
+
+    door_edge_pin_val = (u8)GPIO_GetPinStatus(1, 7);
+    if (door_edge_pin_val == PIN_LOW)
     {
         current_fault = FAULT_DOOR_OBSTRUCTION_ID;
         return current_fault;
@@ -407,9 +413,9 @@ void Fault_Clear(u8 id)
 }
 
 
-# 90 "LOGIC/elevator_safety.c" 3 4
+# 92 "LOGIC/elevator_safety.c" 3 4
 _Bool 
-# 90 "LOGIC/elevator_safety.c"
+# 92 "LOGIC/elevator_safety.c"
     Fault_IsActive(void)
 {
     return (current_fault != FAULT_NONE);

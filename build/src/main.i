@@ -290,7 +290,11 @@ STD_ReturnType ADC_ReadResult(uint16_h *puint16Result);
 # 86 "src/../LOGIC/../MCL/ADC/adc_interface.h"
 STD_ReturnType ADC_ReadChannelBlocking(uint8_h uint8Channel, uint16_h *puint16Result);
 # 9 "src/../LOGIC/elevator_motion.h" 2
-# 18 "src/../LOGIC/elevator_motion.h"
+
+
+
+
+
 typedef enum {
     MOTION_IDLE = 0,
     MOTION_MOVING_UP,
@@ -333,7 +337,7 @@ void Elevator_MoveToFloor(uint8_h floor);
 
 # 1 "c:\\users\\hp\\.platformio\\packages\\toolchain-atmelavr\\lib\\gcc\\avr\\7.3.0\\include\\stdbool.h" 1 3 4
 # 6 "src/../LOGIC/elevator_safety.h" 2
-# 14 "src/../LOGIC/elevator_safety.h"
+# 15 "src/../LOGIC/elevator_safety.h"
 typedef enum {
     FAULT_NONE = 0,
     FAULT_EMERGENCY_STOP_ID,
@@ -348,9 +352,9 @@ void Emergency_Stop(void);
 void Fault_Set(uint8_h id);
 void Fault_Clear(uint8_h id);
 
-# 27 "src/../LOGIC/elevator_safety.h" 3 4
+# 28 "src/../LOGIC/elevator_safety.h" 3 4
 _Bool 
-# 27 "src/../LOGIC/elevator_safety.h"
+# 28 "src/../LOGIC/elevator_safety.h"
     Fault_IsActive(void);
 
 void Elevator_Safety_Init(void);
@@ -394,7 +398,7 @@ STD_ReturnType GPIO_PinToggle(uint8_h uint8Port, uint8_h uint8Pin);
 STD_ReturnType GPIO_SetPinValue(uint8_h uint8Port, uint8_h uint8Pin, uint8_h uint8Value);
 STD_ReturnType GPIO_SetPortValue(uint8_h uint8Port, uint8_h uint8Value);
 # 7 "LOGIC/elevator_io.h" 2
-# 44 "LOGIC/elevator_io.h"
+# 50 "LOGIC/elevator_io.h"
 typedef enum {
     IO_BTN_CAR_CALL_G = 0,
     IO_BTN_CAR_CALL_1,
@@ -426,6 +430,10 @@ void IO_Update(void);
 uint8_h IO_GetButtonEvent(uint8_h id);
 
 
+
+uint16_h ADC_Read(uint8_h channel);
+
+
 void IO_SetLedState(uint8_h ledPin, uint8_h state);
 void IO_SetHoistMotor(uint8_h state);
 void IO_SetDoorMotor(uint8_h state);
@@ -438,8 +446,330 @@ void Gong_Play(uint8_h type);
 # 6 "src/main.c" 2
 
 
+# 1 "c:\\users\\hp\\.platformio\\packages\\toolchain-atmelavr\\avr\\include\\util\\delay.h" 1 3
+# 44 "c:\\users\\hp\\.platformio\\packages\\toolchain-atmelavr\\avr\\include\\util\\delay.h" 3
+# 1 "c:\\users\\hp\\.platformio\\packages\\toolchain-atmelavr\\avr\\include\\inttypes.h" 1 3
+# 77 "c:\\users\\hp\\.platformio\\packages\\toolchain-atmelavr\\avr\\include\\inttypes.h" 3
+
+# 77 "c:\\users\\hp\\.platformio\\packages\\toolchain-atmelavr\\avr\\include\\inttypes.h" 3
+typedef int32_t int_farptr_t;
 
 
+
+typedef uint32_t uint_farptr_t;
+# 45 "c:\\users\\hp\\.platformio\\packages\\toolchain-atmelavr\\avr\\include\\util\\delay.h" 2 3
+# 1 "c:\\users\\hp\\.platformio\\packages\\toolchain-atmelavr\\avr\\include\\util\\delay_basic.h" 1 3
+# 40 "c:\\users\\hp\\.platformio\\packages\\toolchain-atmelavr\\avr\\include\\util\\delay_basic.h" 3
+static __inline__ void _delay_loop_1(uint8_t __count) __attribute__((__always_inline__));
+static __inline__ void _delay_loop_2(uint16_t __count) __attribute__((__always_inline__));
+# 80 "c:\\users\\hp\\.platformio\\packages\\toolchain-atmelavr\\avr\\include\\util\\delay_basic.h" 3
+void
+_delay_loop_1(uint8_t __count)
+{
+ __asm__ volatile (
+  "1: dec %0" "\n\t"
+  "brne 1b"
+  : "=r" (__count)
+  : "0" (__count)
+ );
+}
+# 102 "c:\\users\\hp\\.platformio\\packages\\toolchain-atmelavr\\avr\\include\\util\\delay_basic.h" 3
+void
+_delay_loop_2(uint16_t __count)
+{
+ __asm__ volatile (
+  "1: sbiw %0,1" "\n\t"
+  "brne 1b"
+  : "=w" (__count)
+  : "0" (__count)
+ );
+}
+# 46 "c:\\users\\hp\\.platformio\\packages\\toolchain-atmelavr\\avr\\include\\util\\delay.h" 2 3
+# 1 "c:\\users\\hp\\.platformio\\packages\\toolchain-atmelavr\\avr\\include\\math.h" 1 3
+# 127 "c:\\users\\hp\\.platformio\\packages\\toolchain-atmelavr\\avr\\include\\math.h" 3
+extern double cos(double __x) __attribute__((__const__));
+
+
+
+
+
+extern double sin(double __x) __attribute__((__const__));
+
+
+
+
+
+extern double tan(double __x) __attribute__((__const__));
+
+
+
+
+
+
+extern double fabs(double __x) __attribute__((__const__));
+
+
+
+
+
+
+extern double fmod(double __x, double __y) __attribute__((__const__));
+# 168 "c:\\users\\hp\\.platformio\\packages\\toolchain-atmelavr\\avr\\include\\math.h" 3
+extern double modf(double __x, double *__iptr);
+
+
+extern float modff (float __x, float *__iptr);
+
+
+
+
+extern double sqrt(double __x) __attribute__((__const__));
+
+
+extern float sqrtf (float) __attribute__((__const__));
+
+
+
+
+extern double cbrt(double __x) __attribute__((__const__));
+# 195 "c:\\users\\hp\\.platformio\\packages\\toolchain-atmelavr\\avr\\include\\math.h" 3
+extern double hypot (double __x, double __y) __attribute__((__const__));
+
+
+
+
+
+
+
+extern double square(double __x) __attribute__((__const__));
+
+
+
+
+
+
+extern double floor(double __x) __attribute__((__const__));
+
+
+
+
+
+
+extern double ceil(double __x) __attribute__((__const__));
+# 235 "c:\\users\\hp\\.platformio\\packages\\toolchain-atmelavr\\avr\\include\\math.h" 3
+extern double frexp(double __x, int *__pexp);
+
+
+
+
+
+
+
+extern double ldexp(double __x, int __exp) __attribute__((__const__));
+
+
+
+
+
+extern double exp(double __x) __attribute__((__const__));
+
+
+
+
+
+extern double cosh(double __x) __attribute__((__const__));
+
+
+
+
+
+extern double sinh(double __x) __attribute__((__const__));
+
+
+
+
+
+extern double tanh(double __x) __attribute__((__const__));
+
+
+
+
+
+
+
+extern double acos(double __x) __attribute__((__const__));
+
+
+
+
+
+
+
+extern double asin(double __x) __attribute__((__const__));
+
+
+
+
+
+
+extern double atan(double __x) __attribute__((__const__));
+# 299 "c:\\users\\hp\\.platformio\\packages\\toolchain-atmelavr\\avr\\include\\math.h" 3
+extern double atan2(double __y, double __x) __attribute__((__const__));
+
+
+
+
+
+extern double log(double __x) __attribute__((__const__));
+
+
+
+
+
+extern double log10(double __x) __attribute__((__const__));
+
+
+
+
+
+extern double pow(double __x, double __y) __attribute__((__const__));
+
+
+
+
+
+
+extern int isnan(double __x) __attribute__((__const__));
+# 334 "c:\\users\\hp\\.platformio\\packages\\toolchain-atmelavr\\avr\\include\\math.h" 3
+extern int isinf(double __x) __attribute__((__const__));
+
+
+
+
+
+
+__attribute__((__const__)) static inline int isfinite (double __x)
+{
+    unsigned char __exp;
+    __asm__ (
+ "mov	%0, %C1		\n\t"
+ "lsl	%0		\n\t"
+ "mov	%0, %D1		\n\t"
+ "rol	%0		"
+ : "=r" (__exp)
+ : "r" (__x) );
+    return __exp != 0xff;
+}
+
+
+
+
+
+
+__attribute__((__const__)) static inline double copysign (double __x, double __y)
+{
+    __asm__ (
+ "bst	%D2, 7	\n\t"
+ "bld	%D0, 7	"
+ : "=r" (__x)
+ : "0" (__x), "r" (__y) );
+    return __x;
+}
+# 377 "c:\\users\\hp\\.platformio\\packages\\toolchain-atmelavr\\avr\\include\\math.h" 3
+extern int signbit (double __x) __attribute__((__const__));
+
+
+
+
+
+
+extern double fdim (double __x, double __y) __attribute__((__const__));
+# 393 "c:\\users\\hp\\.platformio\\packages\\toolchain-atmelavr\\avr\\include\\math.h" 3
+extern double fma (double __x, double __y, double __z) __attribute__((__const__));
+
+
+
+
+
+
+
+extern double fmax (double __x, double __y) __attribute__((__const__));
+
+
+
+
+
+
+
+extern double fmin (double __x, double __y) __attribute__((__const__));
+
+
+
+
+
+
+extern double trunc (double __x) __attribute__((__const__));
+# 427 "c:\\users\\hp\\.platformio\\packages\\toolchain-atmelavr\\avr\\include\\math.h" 3
+extern double round (double __x) __attribute__((__const__));
+# 440 "c:\\users\\hp\\.platformio\\packages\\toolchain-atmelavr\\avr\\include\\math.h" 3
+extern long lround (double __x) __attribute__((__const__));
+# 454 "c:\\users\\hp\\.platformio\\packages\\toolchain-atmelavr\\avr\\include\\math.h" 3
+extern long lrint (double __x) __attribute__((__const__));
+# 47 "c:\\users\\hp\\.platformio\\packages\\toolchain-atmelavr\\avr\\include\\util\\delay.h" 2 3
+# 86 "c:\\users\\hp\\.platformio\\packages\\toolchain-atmelavr\\avr\\include\\util\\delay.h" 3
+static __inline__ void _delay_us(double __us) __attribute__((__always_inline__));
+static __inline__ void _delay_ms(double __ms) __attribute__((__always_inline__));
+# 165 "c:\\users\\hp\\.platformio\\packages\\toolchain-atmelavr\\avr\\include\\util\\delay.h" 3
+void
+_delay_ms(double __ms)
+{
+ double __tmp ;
+
+
+
+ uint32_t __ticks_dc;
+ extern void __builtin_avr_delay_cycles(unsigned long);
+ __tmp = ((
+# 174 "c:\\users\\hp\\.platformio\\packages\\toolchain-atmelavr\\avr\\include\\util\\delay.h"
+          16000000UL
+# 174 "c:\\users\\hp\\.platformio\\packages\\toolchain-atmelavr\\avr\\include\\util\\delay.h" 3
+               ) / 1e3) * __ms;
+# 184 "c:\\users\\hp\\.platformio\\packages\\toolchain-atmelavr\\avr\\include\\util\\delay.h" 3
+  __ticks_dc = (uint32_t)(ceil(fabs(__tmp)));
+
+
+ __builtin_avr_delay_cycles(__ticks_dc);
+# 210 "c:\\users\\hp\\.platformio\\packages\\toolchain-atmelavr\\avr\\include\\util\\delay.h" 3
+}
+# 254 "c:\\users\\hp\\.platformio\\packages\\toolchain-atmelavr\\avr\\include\\util\\delay.h" 3
+void
+_delay_us(double __us)
+{
+ double __tmp ;
+
+
+
+ uint32_t __ticks_dc;
+ extern void __builtin_avr_delay_cycles(unsigned long);
+ __tmp = ((
+# 263 "c:\\users\\hp\\.platformio\\packages\\toolchain-atmelavr\\avr\\include\\util\\delay.h"
+          16000000UL
+# 263 "c:\\users\\hp\\.platformio\\packages\\toolchain-atmelavr\\avr\\include\\util\\delay.h" 3
+               ) / 1e6) * __us;
+# 273 "c:\\users\\hp\\.platformio\\packages\\toolchain-atmelavr\\avr\\include\\util\\delay.h" 3
+  __ticks_dc = (uint32_t)(ceil(fabs(__tmp)));
+
+
+ __builtin_avr_delay_cycles(__ticks_dc);
+# 299 "c:\\users\\hp\\.platformio\\packages\\toolchain-atmelavr\\avr\\include\\util\\delay.h" 3
+}
+# 9 "src/main.c" 2
+
+
+
+
+
+# 13 "src/main.c"
 static void Process_Inputs(void)
 {
 
@@ -533,6 +863,7 @@ int main(void)
             Gong_Play(3u);
             Update_LEDs(DIR_STOP, fault);
             Elevator_SendTelemetry();
+            _delay_ms(10);
             continue;
         }
         else if (elevator_state == STATE_EMERGENCY)
@@ -560,6 +891,10 @@ int main(void)
 
             case STATE_MOVING:
                 Update_LEDs(direction, FAULT_NONE);
+
+
+                Elevator_MoveToFloor(target_floor);
+
                 if (current_floor == target_floor)
                 {
                     Elevator_StopMotion();
@@ -574,7 +909,7 @@ int main(void)
                 break;
 
             case STATE_DOOR_OPEN:
-                if (door_timer >= 200u)
+                if (door_timer >= 100u)
                 {
                     Elevator_CloseDoor();
                     door_timer = 0u;
@@ -583,8 +918,9 @@ int main(void)
                 break;
 
             case STATE_DOOR_CLOSING:
-                if (door_timer >= 100u)
+                if (door_timer >= 50u)
                 {
+                    Elevator_StopMotion();
                     elevator_state = STATE_IDLE;
                 }
                 break;
@@ -602,6 +938,9 @@ int main(void)
         }
 
         Elevator_SendTelemetry();
+
+
+        _delay_ms(10);
     }
 
     return 0;

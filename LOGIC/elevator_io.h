@@ -30,6 +30,12 @@
 #define DOOR_IN3_PIN         GPIO_PIN6
 #define DOOR_IN4_PIN         GPIO_PIN7
 
+/* --- تعريفات القنوات التناظرية (ADC Channels / PORTA) --- */
+#define ADC_CAR_POSITION_CH     0u  /* PA0 */
+#define ADC_CAR_LOAD_CH         1u  /* PA1 */
+#define ADC_HOIST_CURRENT_CH    2u  /* PA2 */
+#define ADC_DOOR_POSITION_CH    3u  /* PA3 */
+
 /* --- تعريفات الـ LCD عبر I2C (Aip31068 / PC0-PC1) --- */
 #define LCD_I2C_PORT         GPIO_PORTC
 #define LCD_SCL_PIN          GPIO_PIN0
@@ -71,6 +77,10 @@ void IO_Init(void);
 void IO_Update(void);
 uint8_h IO_GetButtonEvent(uint8_h id);
 
+/* --- دوال القراءة التناظرية (ADC) --- */
+//void ADC_Init(void);
+uint16_h ADC_Read(uint8_h channel);
+
 /* --- دوال التحكم في الـ LEDs والمحركات --- */
 void IO_SetLedState(uint8_h ledPin, uint8_h state);
 void IO_SetHoistMotor(uint8_h state);
@@ -82,4 +92,4 @@ void LCD_ShowFault(void);
 void Serial_SendString(const char *str);
 void Gong_Play(uint8_h type);
 
-#endif 
+#endif

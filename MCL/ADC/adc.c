@@ -3,10 +3,6 @@
 #include "adc_registers.h"
 #include "adc_interface.h"
 
-/*
- * Initializes the ADC peripheral: selects the voltage reference, selects the
- * clock prescaler, and enables the module.
- */
 STD_ReturnType ADC_Init(const ADC_ConfigType *addConfig)
 {
     STD_ReturnType local_Status = E_OK;
@@ -63,19 +59,12 @@ STD_ReturnType ADC_Init(const ADC_ConfigType *addConfig)
     return local_Status;
 }
 
-/*
- * Disables the ADC peripheral (powers it down / stops conversions).
- */
 STD_ReturnType ADC_DeInit(void)
 {
     CLR_BIT(ADC_ADCSRA_REG, ADC_ADEN_BIT);
-
     return E_OK;
 }
 
-/*
- * Selects the given channel and starts a single conversion (non-blocking).
- */
 STD_ReturnType ADC_StartConversion(uint8_h uint8Channel)
 {
     STD_ReturnType local_Status = E_OK;
@@ -91,6 +80,7 @@ STD_ReturnType ADC_StartConversion(uint8_h uint8Channel)
         CLR_BIT(ADC_ADMUX_REG, ADC_MUX2_BIT);
         CLR_BIT(ADC_ADMUX_REG, ADC_MUX3_BIT);
         CLR_BIT(ADC_ADMUX_REG, ADC_MUX4_BIT);
+
         if (GET_BIT(uint8Channel, 0))
         {
             SET_BIT(ADC_ADMUX_REG, ADC_MUX0_BIT);
@@ -110,9 +100,6 @@ STD_ReturnType ADC_StartConversion(uint8_h uint8Channel)
     return local_Status;
 }
 
-/*
- * Reports whether the ADC has finished the conversion that was last started.
- */
 uint8_h ADC_IsConversionComplete(void)
 {
     uint8_h uint8Status = ADC_CONVERSION_DONE;
@@ -125,9 +112,6 @@ uint8_h ADC_IsConversionComplete(void)
     return uint8Status;
 }
 
-/*
- * Reads the 10-bit result of the last completed conversion.
- */
 STD_ReturnType ADC_ReadResult(uint16_h *puint16Result)
 {
     STD_ReturnType local_Status = E_OK;
@@ -147,10 +131,6 @@ STD_ReturnType ADC_ReadResult(uint16_h *puint16Result)
     return local_Status;
 }
 
-/*
- * Blocking read: starts a conversion on the given channel, busy-waits until it
- * finishes, then returns the result.
- */
 STD_ReturnType ADC_ReadChannelBlocking(uint8_h uint8Channel, uint16_h *puint16Result)
 {
     STD_ReturnType local_Status = ADC_StartConversion(uint8Channel);

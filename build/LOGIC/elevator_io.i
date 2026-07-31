@@ -117,6 +117,77 @@ typedef int64_t intmax_t;
 typedef uint64_t uintmax_t;
 # 10 "c:\\users\\hp\\.platformio\\packages\\toolchain-atmelavr\\lib\\gcc\\avr\\7.3.0\\include\\stdint.h" 2 3 4
 # 2 "LOGIC/elevator_io.c" 2
+# 1 "c:\\users\\hp\\.platformio\\packages\\toolchain-atmelavr\\avr\\include\\avr\\io.h" 1 3
+# 99 "c:\\users\\hp\\.platformio\\packages\\toolchain-atmelavr\\avr\\include\\avr\\io.h" 3
+# 1 "c:\\users\\hp\\.platformio\\packages\\toolchain-atmelavr\\avr\\include\\avr\\sfr_defs.h" 1 3
+# 126 "c:\\users\\hp\\.platformio\\packages\\toolchain-atmelavr\\avr\\include\\avr\\sfr_defs.h" 3
+# 1 "c:\\users\\hp\\.platformio\\packages\\toolchain-atmelavr\\avr\\include\\inttypes.h" 1 3
+# 77 "c:\\users\\hp\\.platformio\\packages\\toolchain-atmelavr\\avr\\include\\inttypes.h" 3
+typedef int32_t int_farptr_t;
+
+
+
+typedef uint32_t uint_farptr_t;
+# 127 "c:\\users\\hp\\.platformio\\packages\\toolchain-atmelavr\\avr\\include\\avr\\sfr_defs.h" 2 3
+# 100 "c:\\users\\hp\\.platformio\\packages\\toolchain-atmelavr\\avr\\include\\avr\\io.h" 2 3
+# 244 "c:\\users\\hp\\.platformio\\packages\\toolchain-atmelavr\\avr\\include\\avr\\io.h" 3
+# 1 "c:\\users\\hp\\.platformio\\packages\\toolchain-atmelavr\\avr\\include\\avr\\iom32.h" 1 3
+# 720 "c:\\users\\hp\\.platformio\\packages\\toolchain-atmelavr\\avr\\include\\avr\\iom32.h" 3
+       
+# 721 "c:\\users\\hp\\.platformio\\packages\\toolchain-atmelavr\\avr\\include\\avr\\iom32.h" 3
+
+       
+       
+       
+       
+       
+       
+       
+       
+       
+       
+       
+       
+       
+       
+       
+       
+       
+       
+       
+       
+       
+       
+       
+# 245 "c:\\users\\hp\\.platformio\\packages\\toolchain-atmelavr\\avr\\include\\avr\\io.h" 2 3
+# 703 "c:\\users\\hp\\.platformio\\packages\\toolchain-atmelavr\\avr\\include\\avr\\io.h" 3
+# 1 "c:\\users\\hp\\.platformio\\packages\\toolchain-atmelavr\\avr\\include\\avr\\portpins.h" 1 3
+# 704 "c:\\users\\hp\\.platformio\\packages\\toolchain-atmelavr\\avr\\include\\avr\\io.h" 2 3
+
+# 1 "c:\\users\\hp\\.platformio\\packages\\toolchain-atmelavr\\avr\\include\\avr\\common.h" 1 3
+# 706 "c:\\users\\hp\\.platformio\\packages\\toolchain-atmelavr\\avr\\include\\avr\\io.h" 2 3
+
+# 1 "c:\\users\\hp\\.platformio\\packages\\toolchain-atmelavr\\avr\\include\\avr\\version.h" 1 3
+# 708 "c:\\users\\hp\\.platformio\\packages\\toolchain-atmelavr\\avr\\include\\avr\\io.h" 2 3
+
+
+
+
+
+
+# 1 "c:\\users\\hp\\.platformio\\packages\\toolchain-atmelavr\\avr\\include\\avr\\fuse.h" 1 3
+# 248 "c:\\users\\hp\\.platformio\\packages\\toolchain-atmelavr\\avr\\include\\avr\\fuse.h" 3
+typedef struct
+{
+    unsigned char low;
+    unsigned char high;
+} __fuse_t;
+# 715 "c:\\users\\hp\\.platformio\\packages\\toolchain-atmelavr\\avr\\include\\avr\\io.h" 2 3
+
+
+# 1 "c:\\users\\hp\\.platformio\\packages\\toolchain-atmelavr\\avr\\include\\avr\\lock.h" 1 3
+# 718 "c:\\users\\hp\\.platformio\\packages\\toolchain-atmelavr\\avr\\include\\avr\\io.h" 2 3
+# 3 "LOGIC/elevator_io.c" 2
 # 1 "LOGIC/../Service/STD_Types.h" 1
 
 
@@ -158,7 +229,7 @@ typedef enum
     E_OK = 0,
     E_NOK = 1
 } STD_ReturnType;
-# 3 "LOGIC/elevator_io.c" 2
+# 4 "LOGIC/elevator_io.c" 2
 # 1 "LOGIC/../MCL/GPIO/gpio_interface.h" 1
 
 
@@ -187,7 +258,7 @@ GPIO_PortStatus GPIO_GetPortStatus(uint8_h uint8Port);
 STD_ReturnType GPIO_PinToggle(uint8_h uint8Port, uint8_h uint8Pin);
 STD_ReturnType GPIO_SetPinValue(uint8_h uint8Port, uint8_h uint8Pin, uint8_h uint8Value);
 STD_ReturnType GPIO_SetPortValue(uint8_h uint8Port, uint8_h uint8Value);
-# 4 "LOGIC/elevator_io.c" 2
+# 5 "LOGIC/elevator_io.c" 2
 # 1 "LOGIC/../MCL/UART/uart_interface.h" 1
 
 
@@ -290,7 +361,59 @@ STD_ReturnType UART_ReceiveString(uint8_h *buffer, uint16_h maxLength, uint8_h t
 
 
 STD_ReturnType UART_SetRxCallBack(UART_RxCallBackType callBack);
-# 5 "LOGIC/elevator_io.c" 2
+# 6 "LOGIC/elevator_io.c" 2
+# 1 "LOGIC/../MCL/ADC/adc_interface.h" 1
+
+
+
+# 1 "LOGIC/../MCL/ADC/../../Service/STD_Types.h" 1
+# 5 "LOGIC/../MCL/ADC/adc_interface.h" 2
+# 1 "LOGIC/../MCL/ADC/adc_registers.h" 1
+# 6 "LOGIC/../MCL/ADC/adc_interface.h" 2
+# 38 "LOGIC/../MCL/ADC/adc_interface.h"
+typedef struct
+{
+    uint8_h uint8ReferenceVoltage;
+    uint8_h uint8Prescaler;
+} ADC_ConfigType;
+
+
+
+
+
+
+
+STD_ReturnType ADC_Init(const ADC_ConfigType *addConfig);
+
+
+
+
+
+STD_ReturnType ADC_DeInit(void);
+
+
+
+
+
+
+
+STD_ReturnType ADC_StartConversion(uint8_h uint8Channel);
+
+
+
+
+
+uint8_h ADC_IsConversionComplete(void);
+
+
+
+
+
+
+STD_ReturnType ADC_ReadResult(uint16_h *puint16Result);
+# 86 "LOGIC/../MCL/ADC/adc_interface.h"
+STD_ReturnType ADC_ReadChannelBlocking(uint8_h uint8Channel, uint16_h *puint16Result);
+# 7 "LOGIC/elevator_io.c" 2
 # 1 "LOGIC/../HAL/LCD_Aip31068_i2c/lcd_aip31068_i2c.h" 1
 
 
@@ -472,9 +595,9 @@ STD_ReturnType LCD_Aip31068_ShiftDisplay(LCD_Aip31068_HandleType *handle, uint8_
 # 252 "LOGIC/../HAL/LCD_Aip31068_i2c/lcd_aip31068_i2c.h"
 STD_ReturnType LCD_Aip31068_CreateCustomChar(LCD_Aip31068_HandleType *handle,
                                              uint8_h location, const uint8_h *pPattern);
-# 6 "LOGIC/elevator_io.c" 2
+# 8 "LOGIC/elevator_io.c" 2
 # 1 "LOGIC/elevator_io.h" 1
-# 44 "LOGIC/elevator_io.h"
+# 50 "LOGIC/elevator_io.h"
 typedef enum {
     IO_BTN_CAR_CALL_G = 0,
     IO_BTN_CAR_CALL_1,
@@ -506,6 +629,10 @@ void IO_Update(void);
 uint8_h IO_GetButtonEvent(uint8_h id);
 
 
+
+uint16_h ADC_Read(uint8_h channel);
+
+
 void IO_SetLedState(uint8_h ledPin, uint8_h state);
 void IO_SetHoistMotor(uint8_h state);
 void IO_SetDoorMotor(uint8_h state);
@@ -515,7 +642,7 @@ void LCD_ShowStatus(void);
 void LCD_ShowFault(void);
 void Serial_SendString(const char *str);
 void Gong_Play(uint8_h type);
-# 7 "LOGIC/elevator_io.c" 2
+# 9 "LOGIC/elevator_io.c" 2
 
 static uint8_h g_buttonEvents[15u];
 static uint8_h g_lastButtonState[15u];
@@ -566,6 +693,49 @@ static void IO_DelayMs(uint16_h ms)
     }
 }
 
+
+uint16_h ADC_Read(uint8_h channel)
+{
+    channel &= 0x07;
+    
+# 63 "LOGIC/elevator_io.c" 3
+   (*(volatile uint8_t *)((0x07) + 0x20)) 
+# 63 "LOGIC/elevator_io.c"
+         = (
+# 63 "LOGIC/elevator_io.c" 3
+            (*(volatile uint8_t *)((0x07) + 0x20)) 
+# 63 "LOGIC/elevator_io.c"
+                  & 0xF0) | channel;
+
+
+    
+# 66 "LOGIC/elevator_io.c" 3
+   (*(volatile uint8_t *)((0x06) + 0x20)) 
+# 66 "LOGIC/elevator_io.c"
+          |= (1 << 
+# 66 "LOGIC/elevator_io.c" 3
+                   6
+# 66 "LOGIC/elevator_io.c"
+                       );
+
+
+    while (
+# 69 "LOGIC/elevator_io.c" 3
+          (*(volatile uint8_t *)((0x06) + 0x20)) 
+# 69 "LOGIC/elevator_io.c"
+                 & (1 << 
+# 69 "LOGIC/elevator_io.c" 3
+                         6
+# 69 "LOGIC/elevator_io.c"
+                             ));
+
+    return 
+# 71 "LOGIC/elevator_io.c" 3
+          (*(volatile uint16_t *)((0x04) + 0x20))
+# 71 "LOGIC/elevator_io.c"
+             ;
+}
+
 void IO_Init(void)
 {
     uint8_h index;
@@ -607,6 +777,18 @@ void IO_Init(void)
     (void)GPIO_SetPinValue(0, 7, PIN_LOW);
 
 
+    (void)GPIO_SetPinDirection(0, 0, 0);
+    (void)GPIO_SetPinDirection(0, 1, 0);
+    (void)GPIO_SetPinDirection(0, 2, 0);
+    (void)GPIO_SetPinDirection(0, 3, 0);
+
+    ADC_ConfigType adcConfig = {
+        .uint8ReferenceVoltage = 1,
+        .uint8Prescaler = 7
+    };
+    (void)ADC_Init(&adcConfig);
+
+
     for (index = 0u; index < 15u; ++index)
     {
         (void)GPIO_SetPinDirection(g_inputPins[index].port, g_inputPins[index].pin, 0);
@@ -629,8 +811,8 @@ void IO_Update(void)
 
     for (index = 0u; index < 15u; ++index)
     {
-
         currentState = (uint8_h)GPIO_GetPinStatus(g_inputPins[index].port, g_inputPins[index].pin);
+
 
         if ((g_lastButtonState[index] == PIN_HIGH) && (currentState == PIN_LOW))
         {

@@ -1,7 +1,9 @@
 #include <stdint.h>
+#include <avr/io.h>
 #include "../Service/STD_Types.h"
 #include "../MCL/GPIO/gpio_interface.h"
 #include "../MCL/UART/uart_interface.h"
+#include "../MCL/ADC/adc_interface.h"
 #include "../HAL/LCD_Aip31068_i2c/lcd_aip31068_i2c.h"
 #include "elevator_io.h"
 
@@ -54,6 +56,21 @@ static void IO_DelayMs(uint16_h ms)
     }
 }
 
+/* --- قراءة قناة الـ ADC --- */
+uint16_h ADC_Read(uint8_h channel)
+{
+    channel &= 0x07; /* التأكد أن القناة بين 0 و 7 */
+    ADMUX = (ADMUX & 0xF0) | channel;
+
+    /* بدء التحويل */
+    ADCSRA |= (1 << ADSC);
+
+    /* الانتظار لحين اكتمال القراءة */
+    while (ADCSRA & (1 << ADSC));
+
+    return ADC;
+}
+
 void IO_Init(void)
 {
     uint8_h index;
@@ -94,7 +111,19 @@ void IO_Init(void)
     (void)GPIO_SetPinValue(L298_PORT, DOOR_IN3_PIN, PIN_LOW);
     (void)GPIO_SetPinValue(L298_PORT, DOOR_IN4_PIN, PIN_LOW);
 
-    /* 5. Buttons Init */
+    /* 5. ADC Pins Init (PA0 - PA3) -- (الجزء المعدّل هنا) */
+    (void)GPIO_SetPinDirection(GPIO_PORTA, GPIO_PIN0, GPIO_INPUT);
+    (void)GPIO_SetPinDirection(GPIO_PORTA, GPIO_PIN1, GPIO_INPUT);
+    (void)GPIO_SetPinDirection(GPIO_PORTA, GPIO_PIN2, GPIO_INPUT);
+    (void)GPIO_SetPinDirection(GPIO_PORTA, GPIO_PIN3, GPIO_INPUT);
+
+    ADC_ConfigType adcConfig = {
+        .uint8ReferenceVoltage = ADC_REF_AVCC,
+        .uint8Prescaler = ADC_PRESCALER_128
+    };
+    (void)ADC_Init(&adcConfig);
+
+    /* 6. Buttons Init */
     for (index = 0u; index < IO_BUTTON_COUNT; ++index)
     {
         (void)GPIO_SetPinDirection(g_inputPins[index].port, g_inputPins[index].pin, GPIO_INPUT);
@@ -104,7 +133,7 @@ void IO_Init(void)
         g_lastButtonState[index] = PIN_HIGH;
     }
 
-    /* 6. LCD Init */
+    /* 7. LCD Init */
 #if defined(HAL_LCD_AIP31068_I2C_H) || defined(LCD_AIP31068_I2C_H)
     (void)LCD_Aip31068_Init(&g_lcdHandle);
 #endif
@@ -117,9 +146,9 @@ void IO_Update(void)
 
     for (index = 0u; index < IO_BUTTON_COUNT; ++index)
     {
-        /* التعديل هنا: استخدام دالة القراءة الصحيحة من الـ Driver */
         currentState = (uint8_h)GPIO_GetPinStatus(g_inputPins[index].port, g_inputPins[index].pin);
 
+        /* الكشف عن الضغط الحقيقي Falling Edge */
         if ((g_lastButtonState[index] == PIN_HIGH) && (currentState == PIN_LOW))
         {
             g_buttonEvents[index] = 1u;

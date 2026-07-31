@@ -75,9 +75,9 @@ main:
 	call Safety_Init
 	call LCD_ShowStatus
 	call Elevator_GetCurPosition
-	mov r13,r24
-	mov r15,__zero_reg__
-	mov r14,__zero_reg__
+	mov r15,r24
+	mov r13,__zero_reg__
+	mov r12,__zero_reg__
 	ldi r17,0
 	ldi r16,0
 .L8:
@@ -195,6 +195,12 @@ main:
 	ldi r24,0
 	call Update_LEDs
 	call Elevator_SendTelemetry
+	ldi r24,lo8(-25537)
+	ldi r25,hi8(-25537)
+1:	sbiw r24,1
+	brne 1b
+	rjmp .
+	nop
 	ldi r16,lo8(5)
 	ldi r17,0
 	rjmp .L8
@@ -207,7 +213,7 @@ main:
 	ldi r16,0
 .L24:
 	call Elevator_GetCurPosition
-	mov r12,r24
+	mov r14,r24
 	cpi r16,1
 	cpc r17,__zero_reg__
 	breq .L26
@@ -228,15 +234,15 @@ main:
 	subi r22,-1
 	sbci r23,-1
 	call Elevator_CalculateNextFloor
-	mov r13,r24
+	mov r15,r24
 	ldi r23,0
 	ldi r22,0
 	ldd r24,Y+1
 	ldd r25,Y+2
 	call Update_LEDs
-	cp r12,r13
+	cp r14,r15
 	breq .L25
-	mov r24,r13
+	mov r24,r15
 	call Elevator_MoveToFloor
 	ldi r16,lo8(1)
 	ldi r17,0
@@ -245,11 +251,17 @@ main:
 	sbiw r24,3
 	sbiw r24,2
 	brsh .L30
-	ldi r24,-1
-	sub r14,r24
-	sbc r15,r24
+	ldi r25,-1
+	sub r12,r25
+	sbc r13,r25
 .L30:
 	call Elevator_SendTelemetry
+	ldi r24,lo8(-25537)
+	ldi r25,hi8(-25537)
+1:	sbiw r24,1
+	brne 1b
+	rjmp .
+	nop
 	rjmp .L8
 .L26:
 	ldi r23,0
@@ -257,10 +269,12 @@ main:
 	ldd r24,Y+1
 	ldd r25,Y+2
 	call Update_LEDs
-	cpse r13,r12
+	mov r24,r15
+	call Elevator_MoveToFloor
+	cpse r15,r14
 	rjmp .L25
 	call Elevator_StopMotion
-	mov r24,r13
+	mov r24,r15
 	call Elevator_ClearCall
 	ldi r24,lo8(1)
 	call Gong_Play
@@ -272,27 +286,29 @@ main:
 	ldi r25,0
 	ldi r24,0
 	call Update_LEDs
-	mov r15,__zero_reg__
-	mov r14,__zero_reg__
+	mov r13,__zero_reg__
+	mov r12,__zero_reg__
 	ldi r16,lo8(3)
 	ldi r17,0
 	rjmp .L25
 .L28:
-	ldi r24,-56
-	cp r14,r24
-	cpc r15,__zero_reg__
+	ldi r25,100
+	cp r12,r25
+	cpc r13,__zero_reg__
 	brlo .L25
 	call Elevator_CloseDoor
-	mov r15,__zero_reg__
-	mov r14,__zero_reg__
+	mov r13,__zero_reg__
+	mov r12,__zero_reg__
 	ldi r16,lo8(4)
 	ldi r17,0
 	rjmp .L25
 .L29:
-	ldi r24,100
-	cp r14,r24
-	cpc r15,__zero_reg__
-	brlo .L25
+	ldi r24,50
+	cp r12,r24
+	cpc r13,__zero_reg__
+	brsh .+2
+	rjmp .L25
+	call Elevator_StopMotion
 	ldi r17,0
 	ldi r16,0
 	rjmp .L25

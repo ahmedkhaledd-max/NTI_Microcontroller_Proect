@@ -159,6 +159,35 @@ typedef enum
     E_NOK = 1
 } STD_ReturnType;
 # 3 "LOGIC/elevator_motion.c" 2
+# 1 "LOGIC/../MCL/GPIO/gpio_interface.h" 1
+
+
+
+# 1 "LOGIC/../MCL/GPIO/../../Service/STD_Types.h" 1
+# 5 "LOGIC/../MCL/GPIO/gpio_interface.h" 2
+# 1 "LOGIC/../MCL/GPIO/gpio_registers.h" 1
+# 26 "LOGIC/../MCL/GPIO/gpio_registers.h"
+typedef enum
+{
+    PIN_LOW = 0,
+    PIN_HIGH = 1
+} GPIO_PINStatus;
+
+typedef unsigned char GPIO_PortStatus;
+# 6 "LOGIC/../MCL/GPIO/gpio_interface.h" 2
+# 27 "LOGIC/../MCL/GPIO/gpio_interface.h"
+STD_ReturnType GPIO_SetPinDirection(uint8_h uint8Port, uint8_h uint8Pin, uint8_h uint8Direction);
+# 38 "LOGIC/../MCL/GPIO/gpio_interface.h"
+STD_ReturnType GPIO_SetPortDirection(uint8_h uint8Port, uint8_h uint8Direction);
+
+GPIO_PINStatus GPIO_GetPinStatus(uint8_h uint8Port, uint8_h uint8Pin);
+
+GPIO_PortStatus GPIO_GetPortStatus(uint8_h uint8Port);
+
+STD_ReturnType GPIO_PinToggle(uint8_h uint8Port, uint8_h uint8Pin);
+STD_ReturnType GPIO_SetPinValue(uint8_h uint8Port, uint8_h uint8Pin, uint8_h uint8Value);
+STD_ReturnType GPIO_SetPortValue(uint8_h uint8Port, uint8_h uint8Value);
+# 4 "LOGIC/elevator_motion.c" 2
 # 1 "LOGIC/../MCL/ADC/adc_interface.h" 1
 
 
@@ -210,43 +239,9 @@ uint8_h ADC_IsConversionComplete(void);
 STD_ReturnType ADC_ReadResult(uint16_h *puint16Result);
 # 86 "LOGIC/../MCL/ADC/adc_interface.h"
 STD_ReturnType ADC_ReadChannelBlocking(uint8_h uint8Channel, uint16_h *puint16Result);
-# 4 "LOGIC/elevator_motion.c" 2
+# 5 "LOGIC/elevator_motion.c" 2
 # 1 "LOGIC/elevator_io.h" 1
-
-
-
-
-
-# 1 "LOGIC/../MCL/GPIO/gpio_interface.h" 1
-
-
-
-# 1 "LOGIC/../MCL/GPIO/../../Service/STD_Types.h" 1
-# 5 "LOGIC/../MCL/GPIO/gpio_interface.h" 2
-# 1 "LOGIC/../MCL/GPIO/gpio_registers.h" 1
-# 26 "LOGIC/../MCL/GPIO/gpio_registers.h"
-typedef enum
-{
-    PIN_LOW = 0,
-    PIN_HIGH = 1
-} GPIO_PINStatus;
-
-typedef unsigned char GPIO_PortStatus;
-# 6 "LOGIC/../MCL/GPIO/gpio_interface.h" 2
-# 27 "LOGIC/../MCL/GPIO/gpio_interface.h"
-STD_ReturnType GPIO_SetPinDirection(uint8_h uint8Port, uint8_h uint8Pin, uint8_h uint8Direction);
-# 38 "LOGIC/../MCL/GPIO/gpio_interface.h"
-STD_ReturnType GPIO_SetPortDirection(uint8_h uint8Port, uint8_h uint8Direction);
-
-GPIO_PINStatus GPIO_GetPinStatus(uint8_h uint8Port, uint8_h uint8Pin);
-
-GPIO_PortStatus GPIO_GetPortStatus(uint8_h uint8Port);
-
-STD_ReturnType GPIO_PinToggle(uint8_h uint8Port, uint8_h uint8Pin);
-STD_ReturnType GPIO_SetPinValue(uint8_h uint8Port, uint8_h uint8Pin, uint8_h uint8Value);
-STD_ReturnType GPIO_SetPortValue(uint8_h uint8Port, uint8_h uint8Value);
-# 7 "LOGIC/elevator_io.h" 2
-# 44 "LOGIC/elevator_io.h"
+# 50 "LOGIC/elevator_io.h"
 typedef enum {
     IO_BTN_CAR_CALL_G = 0,
     IO_BTN_CAR_CALL_1,
@@ -278,6 +273,10 @@ void IO_Update(void);
 uint8_h IO_GetButtonEvent(uint8_h id);
 
 
+
+uint16_h ADC_Read(uint8_h channel);
+
+
 void IO_SetLedState(uint8_h ledPin, uint8_h state);
 void IO_SetHoistMotor(uint8_h state);
 void IO_SetDoorMotor(uint8_h state);
@@ -287,9 +286,9 @@ void LCD_ShowStatus(void);
 void LCD_ShowFault(void);
 void Serial_SendString(const char *str);
 void Gong_Play(uint8_h type);
-# 5 "LOGIC/elevator_motion.c" 2
+# 6 "LOGIC/elevator_motion.c" 2
 # 1 "LOGIC/elevator_motion.h" 1
-# 18 "LOGIC/elevator_motion.h"
+# 14 "LOGIC/elevator_motion.h"
 typedef enum {
     MOTION_IDLE = 0,
     MOTION_MOVING_UP,
@@ -324,7 +323,7 @@ void Elevator_OpenDoor(void);
 void Elevator_CloseDoor(void);
 void Elevator_StopMotion(void);
 void Elevator_MoveToFloor(uint8_h floor);
-# 6 "LOGIC/elevator_motion.c" 2
+# 7 "LOGIC/elevator_motion.c" 2
 
 static Motion_State_t g_motionState = MOTION_IDLE;
 static Door_State_t g_doorState = DOOR_CLOSED;
@@ -339,46 +338,74 @@ void Motion_Init(void)
 
 void Motion_Update(void)
 {
-    uint16_h adcHoistVal = 0u;
     uint16_h adcDoorVal = 0u;
 
-    if (ADC_ReadChannelBlocking(0, &adcHoistVal) == E_OK)
-    {
 
-    }
-
-    if (ADC_ReadChannelBlocking(1, &adcDoorVal) == E_OK)
-    {
-        g_doorPosition = adcDoorVal;
-    }
+    adcDoorVal = ADC_Read(3u);
+    g_doorPosition = adcDoorVal;
 }
 
 void Motion_GoToFloor(uint8_h floor)
 {
-    if (floor < 4u)
+    uint8_h current_floor = Elevator_GetCurPosition();
+
+    if (floor > current_floor)
     {
         g_motionState = MOTION_MOVING_UP;
+
+        (void)GPIO_SetPinValue(0, 4, PIN_HIGH);
+        (void)GPIO_SetPinValue(0, 5, PIN_LOW);
+    }
+    else if (floor < current_floor)
+    {
+        g_motionState = MOTION_MOVING_DOWN;
+
+        (void)GPIO_SetPinValue(0, 4, PIN_LOW);
+        (void)GPIO_SetPinValue(0, 5, PIN_HIGH);
     }
 }
 
 void Motion_Stop(void)
 {
     g_motionState = MOTION_STOPPED;
+
+    (void)GPIO_SetPinValue(0, 4, PIN_LOW);
+    (void)GPIO_SetPinValue(0, 5, PIN_LOW);
 }
 
 void Door_Open(void)
 {
     g_doorState = DOOR_OPENING;
+
+    (void)GPIO_SetPinValue(0, 6, PIN_HIGH);
+    (void)GPIO_SetPinValue(0, 7, PIN_LOW);
 }
 
 void Door_Close(void)
 {
     g_doorState = DOOR_CLOSING;
+
+    (void)GPIO_SetPinValue(0, 6, PIN_LOW);
+    (void)GPIO_SetPinValue(0, 7, PIN_HIGH);
 }
 
 
-void Elevator_Motion_Init(void) { Motion_Init(); }
-uint8_h Elevator_GetCurPosition(void) { return 0u; }
+void Elevator_Motion_Init(void)
+{
+    Motion_Init();
+}
+
+uint8_h Elevator_GetCurPosition(void)
+{
+    uint16_h adc_pos = ADC_Read(0u);
+
+
+    if (adc_pos < 250u) return 0u;
+    else if (adc_pos < 500u) return 1u;
+    else if (adc_pos < 750u) return 2u;
+    else return 3u;
+}
+
 void Elevator_OpenDoor(void) { Door_Open(); }
 void Elevator_CloseDoor(void) { Door_Close(); }
 void Elevator_StopMotion(void) { Motion_Stop(); }
