@@ -454,8 +454,17 @@ typedef enum {
     DIR_FORCE_DOWN
 } Motion_Direction_t;
 
+typedef enum {
+    DISPLAY_IDLE,
+    DISPLAY_UP,
+    DISPLAY_DOWN,
+    DISPLAY_OVERLOAD
+} Display_State_t;
+
 static Motion_Direction_t forced_dir = DIR_NEUTRAL;
 static u8 is_moving = 0u;
+static u8 target_floor_num = 0u;
+static Display_State_t last_display_state = DISPLAY_IDLE;
 
 void System_Init(void)
 {
@@ -465,6 +474,14 @@ void System_Init(void)
     system_fault_counter = 0u;
     forced_dir = DIR_NEUTRAL;
     is_moving = 0u;
+    target_floor_num = 0u;
+
+
+    LCD_Init();
+    LCD_Clear();
+    LCD_SetCursor(0, 0);
+    LCD_WriteString("Elevator Ready");
+    last_display_state = DISPLAY_IDLE;
 }
 
 void System_Update(void)
@@ -475,68 +492,131 @@ void System_Update(void)
     IO_Update();
 
 
-    if (IO_GetButtonEvent(IO_BTN_HALL_UP_G) ||
-        IO_GetButtonEvent(IO_BTN_HALL_UP_1) ||
-        IO_GetButtonEvent(IO_BTN_HALL_UP_2))
+    if (IO_GetButtonEvent(IO_BTN_HALL_UP_G))
     {
-        forced_dir = DIR_FORCE_UP;
-        is_moving = 1u;
+        forced_dir = DIR_FORCE_UP; is_moving = 1u; target_floor_num = 0u;
+    }
+    else if (IO_GetButtonEvent(IO_BTN_HALL_UP_1))
+    {
+        forced_dir = DIR_FORCE_UP; is_moving = 1u; target_floor_num = 1u;
+    }
+    else if (IO_GetButtonEvent(IO_BTN_HALL_UP_2))
+    {
+        forced_dir = DIR_FORCE_UP; is_moving = 1u; target_floor_num = 2u;
     }
 
-    else if (IO_GetButtonEvent(IO_BTN_HALL_DOWN_1) ||
-             IO_GetButtonEvent(IO_BTN_HALL_DOWN_2) ||
-             IO_GetButtonEvent(IO_BTN_HALL_DOWN_3))
+    else if (IO_GetButtonEvent(IO_BTN_HALL_DOWN_1))
     {
-        forced_dir = DIR_FORCE_DOWN;
-        is_moving = 1u;
+        forced_dir = DIR_FORCE_DOWN; is_moving = 1u; target_floor_num = 1u;
+    }
+    else if (IO_GetButtonEvent(IO_BTN_HALL_DOWN_2))
+    {
+        forced_dir = DIR_FORCE_DOWN; is_moving = 1u; target_floor_num = 2u;
+    }
+    else if (IO_GetButtonEvent(IO_BTN_HALL_DOWN_3))
+    {
+        forced_dir = DIR_FORCE_DOWN; is_moving = 1u; target_floor_num = 3u;
     }
 
     else if (IO_GetButtonEvent(IO_BTN_CAR_CALL_G))
     {
+        target_floor_num = 0u;
         if (current_floor > 0u) { forced_dir = DIR_FORCE_DOWN; is_moving = 1u; }
     }
     else if (IO_GetButtonEvent(IO_BTN_CAR_CALL_1))
     {
+        target_floor_num = 1u;
         if (current_floor < 1u) { forced_dir = DIR_FORCE_UP; is_moving = 1u; }
         else if (current_floor > 1u) { forced_dir = DIR_FORCE_DOWN; is_moving = 1u; }
     }
     else if (IO_GetButtonEvent(IO_BTN_CAR_CALL_2))
     {
+        target_floor_num = 2u;
         if (current_floor < 2u) { forced_dir = DIR_FORCE_UP; is_moving = 1u; }
         else if (current_floor > 2u) { forced_dir = DIR_FORCE_DOWN; is_moving = 1u; }
     }
     else if (IO_GetButtonEvent(IO_BTN_CAR_CALL_3))
     {
+        target_floor_num = 3u;
         if (current_floor < 3u) { forced_dir = DIR_FORCE_UP; is_moving = 1u; }
     }
 
 
-    if (is_moving != 0u)
+    if (GPIO_GetPinStatus(1, 6) == PIN_LOW)
     {
-        if (forced_dir == DIR_FORCE_UP)
-        {
+        (void)GPIO_SetPinValue(3, 7, PIN_HIGH);
+        (void)GPIO_SetPinValue(2, 4, PIN_HIGH);
 
-            (void)GPIO_SetPinValue(0, 4, PIN_HIGH);
-            (void)GPIO_SetPinValue(0, 5, PIN_LOW);
-            (void)GPIO_SetPinValue(2, 2, PIN_HIGH);
-            (void)GPIO_SetPinValue(2, 3, PIN_LOW);
-        }
-        else if (forced_dir == DIR_FORCE_DOWN)
+        if (last_display_state != DISPLAY_OVERLOAD)
         {
-
-            (void)GPIO_SetPinValue(0, 4, PIN_LOW);
-            (void)GPIO_SetPinValue(0, 5, PIN_HIGH);
-            (void)GPIO_SetPinValue(2, 2, PIN_LOW);
-            (void)GPIO_SetPinValue(2, 3, PIN_HIGH);
+            LCD_Clear();
+            LCD_SetCursor(0, 0);
+            LCD_WriteString("!! WARNING !!");
+            LCD_SetCursor(1, 0);
+            LCD_WriteString("OVERLOADED!");
+            last_display_state = DISPLAY_OVERLOAD;
         }
     }
     else
     {
+        (void)GPIO_SetPinValue(3, 7, PIN_LOW);
+        (void)GPIO_SetPinValue(2, 4, PIN_LOW);
 
-        (void)GPIO_SetPinValue(0, 4, PIN_LOW);
-        (void)GPIO_SetPinValue(0, 5, PIN_LOW);
-        (void)GPIO_SetPinValue(2, 2, PIN_LOW);
-        (void)GPIO_SetPinValue(2, 3, PIN_LOW);
+
+        if (is_moving != 0u)
+        {
+            if (forced_dir == DIR_FORCE_UP)
+            {
+                (void)GPIO_SetPinValue(0, 4, PIN_HIGH);
+                (void)GPIO_SetPinValue(0, 5, PIN_LOW);
+                (void)GPIO_SetPinValue(2, 2, PIN_HIGH);
+                (void)GPIO_SetPinValue(2, 3, PIN_LOW);
+
+                if (last_display_state != DISPLAY_UP)
+                {
+                    LCD_Clear();
+                    LCD_SetCursor(0, 0);
+                    LCD_WriteString("Going UP to:");
+                    LCD_SetCursor(1, 0);
+                    LCD_WriteString("Floor ");
+                    LCD_WriteChar('0' + target_floor_num);
+                    last_display_state = DISPLAY_UP;
+                }
+            }
+            else if (forced_dir == DIR_FORCE_DOWN)
+            {
+                (void)GPIO_SetPinValue(0, 4, PIN_LOW);
+                (void)GPIO_SetPinValue(0, 5, PIN_HIGH);
+                (void)GPIO_SetPinValue(2, 2, PIN_LOW);
+                (void)GPIO_SetPinValue(2, 3, PIN_HIGH);
+
+                if (last_display_state != DISPLAY_DOWN)
+                {
+                    LCD_Clear();
+                    LCD_SetCursor(0, 0);
+                    LCD_WriteString("Going DOWN to:");
+                    LCD_SetCursor(1, 0);
+                    LCD_WriteString("Floor ");
+                    LCD_WriteChar('0' + target_floor_num);
+                    last_display_state = DISPLAY_DOWN;
+                }
+            }
+        }
+        else
+        {
+            (void)GPIO_SetPinValue(0, 4, PIN_LOW);
+            (void)GPIO_SetPinValue(0, 5, PIN_LOW);
+            (void)GPIO_SetPinValue(2, 2, PIN_LOW);
+            (void)GPIO_SetPinValue(2, 3, PIN_LOW);
+
+            if (last_display_state != DISPLAY_IDLE)
+            {
+                LCD_Clear();
+                LCD_SetCursor(0, 0);
+                LCD_WriteString("Elevator Idle");
+                last_display_state = DISPLAY_IDLE;
+            }
+        }
     }
 
 
@@ -552,18 +632,6 @@ void System_Update(void)
     else if (IO_GetButtonEvent(IO_BTN_DOOR_CLOSE))
     {
         Elevator_CloseDoor();
-    }
-
-
-    if (GPIO_GetPinStatus(1, 6) == PIN_LOW)
-    {
-        (void)GPIO_SetPinValue(3, 7, PIN_HIGH);
-        (void)GPIO_SetPinValue(2, 4, PIN_HIGH);
-    }
-    else
-    {
-        (void)GPIO_SetPinValue(3, 7, PIN_LOW);
-        (void)GPIO_SetPinValue(2, 4, PIN_LOW);
     }
 
 
