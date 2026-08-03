@@ -1,186 +1,209 @@
 #include "../Service/STD_Types.h"
-#include "../LOGIC/elevator_dispatch.h"
-#include "../LOGIC/elevator_motion.h"
-#include "../LOGIC/elevator_safety.h"
+#include "elevator_system.h"
+#include "elevator_dispatch.h"
+#include "elevator_motion.h"
+#include "elevator_safety.h"
 #include "elevator_io.h"
 
-/* إذا كنت تستخدم AVR GCC */
-#include <util/delay.h> 
+/* ============================================================================
+ * Internal Macros & Timeouts
+ * ============================================================================ */
+#define DOOR_OPEN_DURATION_CYCLES    300u  /* زمن بقاء الباب مفتوحاً */
 
-#define DOOR_OPEN_TIME      100u  /* مع delay_ms(10) هذا يعادل ثانية تقريباً */
-#define DOOR_CLOSE_TIME     50u
+/* ============================================================================
+ * Helper Functions
+ * ============================================================================ */
 
-static void Process_Inputs(void)
+/* مسح وإعادة رسم الشاشة بناءً على الحالة الحالية */
+static void Update_LCD_Display(ElevatorState_t state, u8 current_floor)
 {
-    /* 1. طلبات أدوار الكابينة (Car Calls) */
+    /* تحديث السيريال ببيانات موقع الطابق */
+    Elevator_SendTelemetry();
+
+    if (state == STATE_EMERGENCY)
+    {
+        LCD_ShowFault();
+    }
+    else
+    {
+        LCD_ShowStatus();
+    }
+}
+
+/* قراءة الأزرار وتسجيل الطلبات في خوارزمية الـ Dispatch */
+static void Process_Button_Inputs(void)
+{
+    /* 1. أزرار الكابينة (Car Calls) */
     if (IO_GetButtonEvent(IO_BTN_CAR_CALL_G)) { Elevator_AddCall(0u, CALL_TYPE_CAR); }
     if (IO_GetButtonEvent(IO_BTN_CAR_CALL_1)) { Elevator_AddCall(1u, CALL_TYPE_CAR); }
     if (IO_GetButtonEvent(IO_BTN_CAR_CALL_2)) { Elevator_AddCall(2u, CALL_TYPE_CAR); }
     if (IO_GetButtonEvent(IO_BTN_CAR_CALL_3)) { Elevator_AddCall(3u, CALL_TYPE_CAR); }
 
-    /* 2. طلبات الأدوار الخارجية (Hall Calls - Up & Down) */
-    if (IO_GetButtonEvent(IO_BTN_HALL_UP_G))   { Elevator_AddCall(0u, CALL_TYPE_HALL_UP); }
-    if (IO_GetButtonEvent(IO_BTN_HALL_UP_1))   { Elevator_AddCall(1u, CALL_TYPE_HALL_UP); }
+    /* 2. أزرار الأدوار الخارجية - صعود (Hall Up) */
+    if (IO_GetButtonEvent(IO_BTN_HALL_UP_G)) { Elevator_AddCall(0u, CALL_TYPE_HALL_UP); }
+    if (IO_GetButtonEvent(IO_BTN_HALL_UP_1)) { Elevator_AddCall(1u, CALL_TYPE_HALL_UP); }
+    if (IO_GetButtonEvent(IO_BTN_HALL_UP_2)) { Elevator_AddCall(2u, CALL_TYPE_HALL_UP); }
+
+    /* 3. أزرار الأدوار الخارجية - نزول (Hall Down) */
     if (IO_GetButtonEvent(IO_BTN_HALL_DOWN_1)) { Elevator_AddCall(1u, CALL_TYPE_HALL_DOWN); }
     if (IO_GetButtonEvent(IO_BTN_HALL_UP_2))   { Elevator_AddCall(2u, CALL_TYPE_HALL_UP); }
     if (IO_GetButtonEvent(IO_BTN_HALL_DOWN_2)) { Elevator_AddCall(2u, CALL_TYPE_HALL_DOWN); }
     if (IO_GetButtonEvent(IO_BTN_HALL_DOWN_3)) { Elevator_AddCall(3u, CALL_TYPE_HALL_DOWN); }
-
-    /* 3. أزرار التحكم بالباب من الداخل */
-    if (IO_GetButtonEvent(IO_BTN_DOOR_OPEN))  { Elevator_OpenDoor(); }
-    if (IO_GetButtonEvent(IO_BTN_DOOR_CLOSE)) { Elevator_CloseDoor(); }
-
-    /* 4. زر جرس الطوارئ */
-    if (IO_GetButtonEvent(IO_BTN_EMERG_ALARM)) { Gong_Play(3u); }
 }
 
-static void Update_LEDs(ElevatorDirection_t dir, FaultType_t fault)
-{
-    if (fault != FAULT_NONE)
-    {
-        (void)GPIO_SetPinValue(GPIO_PORTC, LED_OVERLOAD_PIN, PIN_HIGH);
-        (void)GPIO_SetPinValue(GPIO_PORTC, LED_UP_PIN, PIN_LOW);
-        (void)GPIO_SetPinValue(GPIO_PORTC, LED_DOWN_PIN, PIN_LOW);
-    }
-    else
-    {
-        (void)GPIO_SetPinValue(GPIO_PORTC, LED_OVERLOAD_PIN, PIN_LOW);
-
-        if (dir == DIR_UP)
-        {
-            (void)GPIO_SetPinValue(GPIO_PORTC, LED_UP_PIN, PIN_HIGH);
-            (void)GPIO_SetPinValue(GPIO_PORTC, LED_DOWN_PIN, PIN_LOW);
-        }
-        else if (dir == DIR_DOWN)
-        {
-            (void)GPIO_SetPinValue(GPIO_PORTC, LED_UP_PIN, PIN_LOW);
-            (void)GPIO_SetPinValue(GPIO_PORTC, LED_DOWN_PIN, PIN_HIGH);
-        }
-        else
-        {
-            (void)GPIO_SetPinValue(GPIO_PORTC, LED_UP_PIN, PIN_LOW);
-            (void)GPIO_SetPinValue(GPIO_PORTC, LED_DOWN_PIN, PIN_LOW);
-        }
-    }
-}
-
+/* ============================================================================
+ * Main Function
+ * ============================================================================ */
 int main(void)
 {
-    ElevatorState_t elevator_state = STATE_IDLE;
-    ElevatorDirection_t direction = DIR_STOP;
-    FaultType_t fault = FAULT_NONE;
+    /* 1. تهيئة كافة الوحدات (Initialization) */
+    IO_Init();
+    Elevator_Motion_Init();
+    Elevator_Safety_Init();
+    Elevator_Dispatch_Init();
+    System_Init();
+
+    /* المتغيرات المحلية لآلة الحالات */
+    ElevatorState_t current_state = STATE_IDLE;
+    ElevatorDirection_t current_dir = DIR_STOP;
     u8 current_floor = 0u;
     u8 target_floor = 0u;
     u16 door_timer = 0u;
+    FaultType_t active_fault = FAULT_NONE;
 
-    /* 1. تهيئة جميع الطبقات */
-    IO_Init();
-    Elevator_Dispatch_Init();
-    Elevator_Motion_Init();
-    Safety_Init();
-
+    /* إظهار الشاشة الابتدائية */
     LCD_ShowStatus();
 
-    current_floor = Elevator_GetCurPosition();
-    target_floor = current_floor;
-
+    /* 2. الحلقة الرئيسية (Super Loop) */
     while (1)
     {
-        /* 2. تحديث قراءات المدخلات وحالة الأمان */
+        /* أ) تحديث قراءات المدخلات والحساسات */
         IO_Update();
+        System_Update();
         Motion_Update();
-        Safety_Update();
-        Process_Inputs();
-
-        /* 3. فحص مفاتيح وأعطال الأمان */
-        fault = Elevator_CheckFaults();
-        if (fault != FAULT_NONE)
-        {
-            Elevator_LogFault(fault);
-            Elevator_StopMotion();
-            elevator_state = STATE_EMERGENCY;
-            LCD_ShowFault();
-            Gong_Play(3u);
-            Update_LEDs(DIR_STOP, fault);
-            Elevator_SendTelemetry();
-            _delay_ms(10);
-            continue;
-        }
-        else if (elevator_state == STATE_EMERGENCY)
-        {
-            /* العودة للحالة الطبيعية عند زوال العطل */
-            elevator_state = STATE_IDLE;
-            LCD_ShowStatus();
-        }
 
         current_floor = Elevator_GetCurPosition();
 
-        /* 4. State Machine للتحكم بالمصعد */
-        switch (elevator_state)
+        /* ب) فحص الأعطال والسلامة (Safety Check) */
+        active_fault = Elevator_CheckFaults();
+
+        if (active_fault != FAULT_NONE)
+        {
+            /* عند وجود خطأ جديد، قم بإيقاف المحركات والدخول في حالة الطوارئ */
+            if (current_state != STATE_EMERGENCY)
+            {
+            Elevator_StopMotion();
+                Elevator_LogFault(active_fault);
+                (void)GPIO_SetPinValue(LED_OVERLOAD_PORT, LED_OVERLOAD_PIN, PIN_HIGH);
+                current_state = STATE_EMERGENCY;
+            }
+        }
+
+        /* ج) معالجة الأزرار المسجلة */
+        Process_Button_Inputs();
+
+        /* د) آلة الحالات (Elevator State Machine) */
+        switch (current_state)
         {
             case STATE_IDLE:
-                target_floor = Elevator_CalculateNextFloor(current_floor, &direction);
-                Update_LEDs(direction, FAULT_NONE);
+                /* إطفاء لمبة ومؤشرات الحركة */
+                (void)GPIO_SetPinValue(LED_UP_PORT, LED_UP_PIN, PIN_LOW);
+                (void)GPIO_SetPinValue(LED_DOWN_PORT, LED_DOWN_PIN, PIN_LOW);
+                (void)GPIO_SetPinValue(LED_OVERLOAD_PORT, LED_OVERLOAD_PIN, PIN_LOW);
 
-                if (target_floor != current_floor)
+                /* حساب الهدف القادم من خوارزمية الـ LOOK */
+                target_floor = Elevator_CalculateNextFloor(current_floor, &current_dir);
+
+                /* إذا كان هناك طلب لطابق آخر */
+                if (current_dir != DIR_STOP && target_floor != current_floor)
                 {
+                    Elevator_CloseDoor(); // التأكد من إغلاق الباب قبل الحركة
                     Elevator_MoveToFloor(target_floor);
-                    elevator_state = STATE_MOVING;
+
+                    /* تحديث إشارات الاتجاه (LEDs) */
+                    if (current_dir == DIR_UP)
+                    {
+                        (void)GPIO_SetPinValue(LED_UP_PORT, LED_UP_PIN, PIN_HIGH);
+                        (void)GPIO_SetPinValue(LED_DOWN_PORT, LED_DOWN_PIN, PIN_LOW);
+                    }
+                    else if (current_dir == DIR_DOWN)
+                    {
+                        (void)GPIO_SetPinValue(LED_UP_PORT, LED_UP_PIN, PIN_LOW);
+                        (void)GPIO_SetPinValue(LED_DOWN_PORT, LED_DOWN_PIN, PIN_HIGH);
+                    }
+
+                    current_state = STATE_MOVING;
+                }
+                /* إذا كان الطلب في نفس الطابق الحالي وتم ضغط فتح الباب */
+                else if (target_floor == current_floor && IO_GetButtonEvent(IO_BTN_DOOR_OPEN))
+                {
+                    Elevator_ClearCall(current_floor);
+                    Elevator_OpenDoor();
+                    door_timer = 0u;
+                    current_state = STATE_DOOR_OPEN;
                 }
                 break;
 
             case STATE_MOVING:
-                Update_LEDs(direction, FAULT_NONE);
-                
-                /* استمرار إعطاء أمر الحركة للموتور طالما لم نصل */
-                Elevator_MoveToFloor(target_floor);
-
+                /* التحقق من الوصول إلى الطابق المطلوب */
                 if (current_floor == target_floor)
                 {
                     Elevator_StopMotion();
-                    Elevator_ClearCall(current_floor);
-                    Gong_Play(1u);
+                    Elevator_ClearCall(current_floor); // إلغاء طلب هذا الطابق
+
+                    /* إيقاف لمبات الاتجاه */
+                    (void)GPIO_SetPinValue(LED_UP_PORT, LED_UP_PIN, PIN_LOW);
+                    (void)GPIO_SetPinValue(LED_DOWN_PORT, LED_DOWN_PIN, PIN_LOW);
+
+                    /* فتح الباب والانتقال لحالة الأبواب */
                     Elevator_OpenDoor();
                     door_timer = 0u;
-                    elevator_state = STATE_DOOR_OPEN;
-                    direction = DIR_STOP;
-                    Update_LEDs(direction, FAULT_NONE);
+                    current_state = STATE_DOOR_OPEN;
+                }
+                else
+                {
+                    /* الاستمرار في الحركة نحو الهدف */
+                    Elevator_MoveToFloor(target_floor);
                 }
                 break;
 
             case STATE_DOOR_OPEN:
-                if (door_timer >= DOOR_OPEN_TIME)
+                door_timer++;
+
+                /* إمكانية إغلاق الباب مبكراً بضغط زر Door Close أو انتهاء الوقت */
+                if (IO_GetButtonEvent(IO_BTN_DOOR_CLOSE) || (door_timer >= DOOR_OPEN_DURATION_CYCLES))
                 {
                     Elevator_CloseDoor();
                     door_timer = 0u;
-                    elevator_state = STATE_DOOR_CLOSING;
+                    current_state = STATE_IDLE;
                 }
-                break;
-
-            case STATE_DOOR_CLOSING:
-                if (door_timer >= DOOR_CLOSE_TIME)
+                /* إعادة فتح الباب عند ضغط زر Door Open */
+                else if (IO_GetButtonEvent(IO_BTN_DOOR_OPEN))
                 {
-                    Elevator_StopMotion(); /* إيقاف إشارة الموتور بعد نهاية وقت الإغلاق */
-                    elevator_state = STATE_IDLE;
+                    Elevator_OpenDoor();
+                    door_timer = 0u;
                 }
                 break;
 
             case STATE_EMERGENCY:
+                /* يظل في حالة التوقف حتى زوال السبب */
+                Elevator_StopMotion();
+                
+                /* التحقق مما إذا كان الخلل قد زال */
+                if (Elevator_CheckFaults() == FAULT_NONE)
+                {
+                    (void)GPIO_SetPinValue(LED_OVERLOAD_PORT, LED_OVERLOAD_PIN, PIN_LOW);
+                    current_state = STATE_IDLE;
+                }
                 break;
 
             default:
+                current_state = STATE_IDLE;
                 break;
         }
 
-        if ((elevator_state == STATE_DOOR_OPEN) || (elevator_state == STATE_DOOR_CLOSING))
-        {
-            door_timer++;
-        }
-
-        Elevator_SendTelemetry();
-        
-        /* تأخير بسيط لاستقرار المحاكاة في SimulIDE وقراءة الوقت بانتظام */
-        _delay_ms(10); 
+        /* هـ) تحديث الشاشة والسيريال */
+        Update_LCD_Display(current_state, current_floor);
     }
 
     return 0;
