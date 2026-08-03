@@ -66,7 +66,7 @@
 
 <item itemtype="Tunnel" CircId="Tunnel-81" mainComp="false" Show_id="false" Show_Val="false" Pos="-208,132" rotation="0" hflip="1" vflip="1" label="Tunnel-81" idLabPos="-16,-24" labelrot="0" valLabPos="-16,20" valLabRot="0" Name="PD1" IsBus="false" />
 
-<item itemtype="Aip31068_i2c" CircId="Aip31068_i2c-91" mainComp="false" ShowProp="Rows" Show_id="true" Show_Val="true" Pos="-20,-220" rotation="0" hflip="1" vflip="1" label="Aip31068_i2c-91" idLabPos="70,-82" labelrot="0" valLabPos="-16,20" valLabRot="0" Rows="2" Cols="16" Control_Code="62" Frequency="100 _kHz" />
+<item itemtype="Aip31068_i2c" CircId="Aip31068_i2c-91" mainComp="false" ShowProp="Rows" Show_id="true" Show_Val="true" Pos="-20,-220" rotation="0" hflip="1" vflip="1" label="Aip31068_i2c-91" idLabPos="70,-82" labelrot="0" valLabPos="-42.3284,19.4627" valLabRot="0" Rows="2" Cols="16" Control_Code="62" Frequency="100 _kHz" />
 
 <item itemtype="Switch" CircId="Switch-94" mainComp="false" Show_id="true" Show_Val="false" Pos="-116,20" rotation="0" hflip="1" vflip="1" label="Door Safety Edge" idLabPos="-16,-24" labelrot="0" valLabPos="-16,20" valLabRot="0" Norm_Close="false" DT="false" Poles="1" />
 
@@ -218,7 +218,7 @@
 
 <item itemtype="Tunnel" CircId="Tunnel-2" mainComp="false" Show_id="false" Show_Val="false" Pos="144,-128" rotation="0" hflip="-1" vflip="1" label="Tunnel-2" idLabPos="-16,-24" labelrot="0" valLabPos="-16,20" valLabRot="0" Name="PA0" IsBus="false" />
 
-<item itemtype="MCU" CircId="mega32-1" mainComp="false" Show_id="true" Show_Val="false" Pos="88,-136" rotation="0" hflip="1" vflip="1" label="mega32-1" idLabPos="0,-20" labelrot="0" valLabPos="-16,20" valLabRot="0" Frequency="16 MHz" Program="build/firmware.hex" Auto_Load="true" saveEepr="true" Logic_Symbol="false" Wdt_enabled="false" MainMcu="true" SerialMon="-1" />
+<item itemtype="MCU" CircId="mega32-1" mainComp="false" Show_id="true" Show_Val="false" Pos="88,-136" rotation="0" hflip="1" vflip="1" label="mega32-1" idLabPos="0,-20" labelrot="0" valLabPos="-16,20" valLabRot="0" Frequency="16 MHz" Program="build/firmware.hex" Auto_Load="false" saveEepr="true" Logic_Symbol="false" Wdt_enabled="false" MainMcu="true" SerialMon="-1" />
 
 <item itemtype="Tunnel" CircId="Tunnel-52" mainComp="false" Show_id="false" Show_Val="false" Pos="236,-296" rotation="0" hflip="1" vflip="1" label="Tunnel-52" idLabPos="-16,-24" labelrot="0" valLabPos="-16,20" valLabRot="0" Name="PC2" IsBus="false" />
 
@@ -236,11 +236,15 @@
 
 <item itemtype="Tunnel" CircId="Tunnel-256" mainComp="false" Show_id="false" Show_Val="false" Pos="236,-252" rotation="0" hflip="1" vflip="1" label="Tunnel-256" idLabPos="-16,-24" labelrot="0" valLabPos="-16,20" valLabRot="0" Name="PC3" IsBus="false" />
 
-<item itemtype="Tunnel" CircId="Tunnel-93" mainComp="false" Show_id="false" Show_Val="false" Pos="-4,-204" rotation="90" hflip="1" vflip="-1" label="Tunnel-93" idLabPos="-16,-24" labelrot="0" valLabPos="-16,20" valLabRot="0" Name="PC1" IsBus="false" />
+<item itemtype="Tunnel" CircId="Tunnel-93" mainComp="false" Show_id="false" Show_Val="false" Pos="-4,-172" rotation="90" hflip="1" vflip="-1" label="Tunnel-93" idLabPos="-16,-24" labelrot="0" valLabPos="-16,20" valLabRot="0" Name="PC1" IsBus="false" />
 
-<item itemtype="Tunnel" CircId="Tunnel-92" mainComp="false" Show_id="false" Show_Val="false" Pos="4,-204" rotation="90" hflip="1" vflip="-1" label="Tunnel-92" idLabPos="-16,-24" labelrot="0" valLabPos="-16,20" valLabRot="0" Name="PC0" IsBus="false" />
+<item itemtype="Tunnel" CircId="Tunnel-92" mainComp="false" Show_id="false" Show_Val="false" Pos="4,-172" rotation="90" hflip="1" vflip="-1" label="Tunnel-92" idLabPos="-16,-24" labelrot="0" valLabPos="-16,20" valLabRot="0" Name="PC0" IsBus="false" />
 
 <item itemtype="Fixed Voltage" CircId="Fixed Voltage-257" mainComp="false" Show_id="false" Show_Val="false" Pos="-24,252" rotation="90" hflip="1" vflip="-1" label="Fixed Voltage-257" idLabPos="-64,-24" labelrot="0" valLabPos="-16,8" valLabRot="0" Voltage="5 V" Out="true" />
+
+<item itemtype="Resistor" CircId="Resistor-259" mainComp="false" ShowProp="Resistance" Show_id="false" Show_Val="true" Pos="16,-192" rotation="90" hflip="1" vflip="1" label="Resistor-259" idLabPos="-16,-24" labelrot="0" valLabPos="-16,6" valLabRot="0" Resistance="4.7 kΩ" />
+
+<item itemtype="Resistor" CircId="Resistor-260" mainComp="false" ShowProp="Resistance" Show_id="false" Show_Val="true" Pos="-12,-192" rotation="90" hflip="1" vflip="1" label="Resistor-260" idLabPos="-16,-24" labelrot="0" valLabPos="-16,6" valLabRot="0" Resistance="4.7 kΩ" />
 
 <item itemtype="Node" CircId="Node-46" mainComp="false" Pos="372,-208" />
 
@@ -548,16 +552,20 @@
 
 <item itemtype="Connector" uid="Connector-420" startpinid="Tunnel-256-pin" endpinid="Resistor-50-lPin" pointList="236,-252,256,-252" />
 
-<item itemtype="Connector" uid="Connector-431" startpinid="Tunnel-92-pin" endpinid="Aip31068_i2c-91PinSCL" pointList="4,-204,4,-212" />
-
-<item itemtype="Connector" uid="Connector-432" startpinid="Tunnel-93-pin" endpinid="Aip31068_i2c-91PinSDA" pointList="-4,-204,-4,-212" />
-
-<item itemtype="Connector" uid="Connector-434" startpinid="Fixed Voltage-257-outnod" endpinid="L298P-37-Vs" pointList="40,236,40,156,24,156" />
+<item itemtype="Connector" uid="Connector-434" startpinid="Rail-207-outnod" endpinid="L298P-37-Vs" pointList="40,236,40,156,24,156" />
 
 <item itemtype="Connector" uid="Connector-436" startpinid="L298P-37-EnA" endpinid="Node-258-1" pointList="-24,156,-52,156,-52,208,-24,208" />
 
 <item itemtype="Connector" uid="Connector-437" startpinid="L298P-37-EnB" endpinid="Node-258-0" pointList="-24,164,-24,208" />
 
 <item itemtype="Connector" uid="Connector-438" startpinid="Node-258-2" endpinid="Fixed Voltage-257-outnod" pointList="-24,208,-24,236" />
+
+<item itemtype="Connector" uid="Connector-439" startpinid="Tunnel-93-pin" endpinid="Resistor-260-rPin" pointList="-4,-172,-12,-172,-12,-176" />
+
+<item itemtype="Connector" uid="Connector-440" startpinid="Resistor-260-lPin" endpinid="Aip31068_i2c-91PinSDA" pointList="-12,-208,-12,-212,-4,-212" />
+
+<item itemtype="Connector" uid="Connector-441" startpinid="Aip31068_i2c-91PinSCL" endpinid="Resistor-259-lPin" pointList="4,-212,16,-212,16,-208" />
+
+<item itemtype="Connector" uid="Connector-442" startpinid="Resistor-259-rPin" endpinid="Tunnel-92-pin" pointList="16,-176,16,-172,4,-172" />
 
 </circuit>
