@@ -27,33 +27,20 @@ Elevator_CheckFaults:
 	ldi r22,lo8(5)
 	ldi r24,lo8(2)
 	call GPIO_GetPinStatus
-	cpse r24,__zero_reg__
-	rjmp .L3
-	ldi r24,lo8(1)
-	ldi r25,0
-.L7:
-	sts current_fault+1,r25
-	sts current_fault,r24
-	ret
-.L3:
 	ldi r24,lo8(1)
 	call ADC_Read
 	cpi r24,33
 	sbci r25,3
-	brlo .L5
+	brlo .L3
 	ldi r24,lo8(3)
 	ldi r25,0
-	rjmp .L7
-.L5:
+	sts current_fault+1,r25
+	sts current_fault,r24
+	ret
+.L3:
 	ldi r22,lo8(7)
 	ldi r24,lo8(1)
 	call GPIO_GetPinStatus
-	cpse r24,__zero_reg__
-	rjmp .L6
-	ldi r24,lo8(2)
-	ldi r25,0
-	rjmp .L7
-.L6:
 	sts current_fault+1,__zero_reg__
 	sts current_fault,__zero_reg__
 	ldi r25,0
@@ -73,15 +60,33 @@ Elevator_LogFault:
 /* epilogue start */
 	ret
 	.size	Elevator_LogFault, .-Elevator_LogFault
+	.section	.rodata.str1.1,"aMS",@progbits,1
+.LC0:
+	.string	"Floor: "
+.LC1:
+	.string	"\r\n"
+	.text
 .global	Elevator_SendTelemetry
 	.type	Elevator_SendTelemetry, @function
 Elevator_SendTelemetry:
+	push r28
 /* prologue: function */
 /* frame size = 0 */
-/* stack size = 0 */
-.L__stack_usage = 0
+/* stack size = 1 */
+.L__stack_usage = 1
+	call Elevator_GetCurPosition
+	mov r28,r24
+	ldi r24,lo8(.LC0)
+	ldi r25,hi8(.LC0)
+	call UART_SendString
+	mov r24,r28
+	ldi r25,0
+	call UART_SendNumber
+	ldi r24,lo8(.LC1)
+	ldi r25,hi8(.LC1)
 /* epilogue start */
-	ret
+	pop r28
+	jmp UART_SendString
 	.size	Elevator_SendTelemetry, .-Elevator_SendTelemetry
 .global	Safety_Init
 	.type	Safety_Init, @function
@@ -142,10 +147,10 @@ Fault_Clear:
 	lds r19,current_fault+1
 	cp r24,r18
 	cpc __zero_reg__,r19
-	brne .L14
+	brne .L11
 	sts current_fault+1,__zero_reg__
 	sts current_fault,__zero_reg__
-.L14:
+.L11:
 /* epilogue start */
 	ret
 	.size	Fault_Clear, .-Fault_Clear
@@ -160,13 +165,14 @@ Fault_IsActive:
 	lds r18,current_fault
 	lds r19,current_fault+1
 	or r18,r19
-	brne .L17
+	brne .L14
 	ldi r24,0
-.L17:
+.L14:
 /* epilogue start */
 	ret
 	.size	Fault_IsActive, .-Fault_IsActive
 	.local	current_fault
 	.comm	current_fault,2,1
 	.ident	"GCC: (GNU) 7.3.0"
+.global __do_copy_data
 .global __do_clear_bss

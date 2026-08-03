@@ -71,9 +71,14 @@ ADC_Read:
 	or r25,r24
 	out 0x7,r25
 	sbi 0x6,6
-.L7:
-	sbic 0x6,6
+	ldi r24,lo8(17)
+	ldi r25,lo8(39)
+.L8:
+	sbis 0x6,6
 	rjmp .L7
+	sbiw r24,1
+	brne .L8
+.L7:
 	in r24,0x4
 	in r25,0x4+1
 /* epilogue start */
@@ -104,16 +109,16 @@ IO_Init:
 	push r29
 	in r28,__SP_L__
 	in r29,__SP_H__
-	sbiw r28,12
+	sbiw r28,16
 	in __tmp_reg__,__SREG__
 	cli
 	out __SP_H__,r29
 	out __SREG__,__tmp_reg__
 	out __SP_L__,r28
 /* prologue: function */
-/* frame size = 12 */
-/* stack size = 22 */
-.L__stack_usage = 22
+/* frame size = 16 */
+/* stack size = 26 */
+.L__stack_usage = 26
 	ldi r20,0
 	ldi r22,0
 	ldi r24,lo8(3)
@@ -216,11 +221,11 @@ IO_Init:
 	ldi r24,0
 	call GPIO_SetPinDirection
 	ldi r24,lo8(1)
-	std Y+11,r24
+	std Y+15,r24
 	ldi r24,lo8(7)
-	std Y+12,r24
+	std Y+16,r24
 	movw r24,r28
-	adiw r24,11
+	adiw r24,15
 	call ADC_Init
 	ldi r16,lo8(g_inputPins)
 	ldi r17,hi8(g_inputPins)
@@ -232,7 +237,7 @@ IO_Init:
 	mov r14,r25
 	ldi r25,hi8(g_lastButtonState)
 	mov r15,r25
-.L10:
+.L14:
 	movw r30,r16
 	ldd r10,Z+1
 	ld r11,Z
@@ -256,12 +261,42 @@ IO_Init:
 	ldi r31,hi8(g_inputPins+30)
 	cpi r16,lo8(g_inputPins+30)
 	cpc r17,r31
-	brne .L10
+	brne .L14
+	ldi r20,0
+	ldi r22,0
+	ldi r24,lo8(2)
+	call GPIO_SetPinDirection
+	ldi r20,lo8(1)
+	ldi r22,0
+	ldi r24,lo8(2)
+	call GPIO_SetPinValue
+	ldi r20,0
+	ldi r22,lo8(1)
+	ldi r24,lo8(2)
+	call GPIO_SetPinDirection
+	ldi r20,lo8(1)
+	ldi r22,lo8(1)
+	ldi r24,lo8(2)
+	call GPIO_SetPinValue
+	ldi r24,lo8(-96)
+	ldi r25,lo8(-122)
+	ldi r26,lo8(1)
+	ldi r27,0
+	std Y+11,r24
+	std Y+12,r25
+	std Y+13,r26
+	std Y+14,r27
+	movw r24,r28
+	adiw r24,11
+	call I2C_InitMaster
 	ldi r24,lo8(g_lcdHandle)
 	ldi r25,hi8(g_lcdHandle)
 	call LCD_Aip31068_Init
+	ldi r24,lo8(g_lcdHandle)
+	ldi r25,hi8(g_lcdHandle)
+	call LCD_Aip31068_Clear
 /* epilogue start */
-	adiw r28,12
+	adiw r28,16
 	in __tmp_reg__,__SREG__
 	cli
 	out __SP_H__,r29
@@ -300,7 +335,7 @@ IO_Update:
 	mov r15,r24
 	ldi r29,0
 	ldi r28,0
-.L14:
+.L18:
 	movw r30,r16
 	ldd r22,Z+1
 	ld r24,Z
@@ -308,14 +343,14 @@ IO_Update:
 	movw r30,r14
 	ld r25,Z
 	cpi r25,lo8(1)
-	brne .L13
+	brne .L17
 	cpse r24,__zero_reg__
-	rjmp .L13
+	rjmp .L17
 	movw r30,r28
 	subi r30,lo8(-(g_buttonEvents))
 	sbci r31,hi8(-(g_buttonEvents))
 	st Z,r25
-.L13:
+.L17:
 	movw r30,r14
 	st Z+,r24
 	movw r14,r30
@@ -324,7 +359,7 @@ IO_Update:
 	sbci r17,-1
 	cpi r28,15
 	cpc r29,__zero_reg__
-	brne .L14
+	brne .L18
 /* epilogue start */
 	pop r29
 	pop r28
@@ -342,20 +377,20 @@ IO_GetButtonEvent:
 /* stack size = 0 */
 .L__stack_usage = 0
 	cpi r24,lo8(15)
-	brsh .L18
+	brsh .L22
 	mov r30,r24
 	ldi r31,0
 	subi r30,lo8(-(g_buttonEvents))
 	sbci r31,hi8(-(g_buttonEvents))
 	ld r24,Z
 	tst r24
-	breq .L16
+	breq .L20
 	st Z,__zero_reg__
 	ldi r24,lo8(1)
 	ret
-.L18:
+.L22:
 	ldi r24,0
-.L16:
+.L20:
 /* epilogue start */
 	ret
 	.size	IO_GetButtonEvent, .-IO_GetButtonEvent
@@ -389,23 +424,23 @@ Gong_Play:
 	clr r15
 	inc r15
 	cpi r28,lo8(1)
-	breq .L25
+	breq .L29
 	ldi r16,lo8(100)
 	ldi r17,0
 	ldi r18,lo8(100)
 	mov r14,r18
 	mov r15,__zero_reg__
 	cpi r28,lo8(2)
-	breq .L25
+	breq .L29
 	ldi r16,lo8(70)
 	ldi r17,0
 	ldi r25,lo8(70)
 	mov r14,r25
 	mov r15,__zero_reg__
 	ldi r28,lo8(3)
-.L25:
+.L29:
 	ldi r29,0
-.L27:
+.L31:
 	ldi r20,lo8(1)
 	ldi r22,lo8(7)
 	ldi r24,lo8(3)
@@ -420,7 +455,7 @@ Gong_Play:
 	call IO_DelayMs
 	subi r29,lo8(-(1))
 	cpse r28,r29
-	rjmp .L27
+	rjmp .L31
 /* epilogue start */
 	pop r29
 	pop r28
@@ -433,6 +468,8 @@ Gong_Play:
 	.section	.rodata.str1.1,"aMS",@progbits,1
 .LC1:
 	.string	"STATUS: System Ready\r\n"
+.LC2:
+	.string	"ELEVATOR READY"
 	.text
 .global	LCD_ShowStatus
 	.type	LCD_ShowStatus, @function
@@ -441,13 +478,33 @@ LCD_ShowStatus:
 /* frame size = 0 */
 /* stack size = 0 */
 .L__stack_usage = 0
+	lds r24,is_drawn.1680
+	cpse r24,__zero_reg__
+	rjmp .L35
 	ldi r24,lo8(.LC1)
 	ldi r25,hi8(.LC1)
-	jmp UART_SendString
+	call UART_SendString
+	ldi r24,lo8(g_lcdHandle)
+	ldi r25,hi8(g_lcdHandle)
+	call LCD_Aip31068_Clear
+	ldi r18,lo8(.LC2)
+	ldi r19,hi8(.LC2)
+	ldi r20,0
+	ldi r22,0
+	ldi r24,lo8(g_lcdHandle)
+	ldi r25,hi8(g_lcdHandle)
+	call LCD_Aip31068_WriteStringAt
+	ldi r24,lo8(1)
+	sts is_drawn.1680,r24
+.L35:
+/* epilogue start */
+	ret
 	.size	LCD_ShowStatus, .-LCD_ShowStatus
 	.section	.rodata.str1.1
-.LC2:
+.LC3:
 	.string	"FAULT: EMERGENCY FAULT!\r\n"
+.LC4:
+	.string	"!!! FAULT !!!"
 	.text
 .global	LCD_ShowFault
 	.type	LCD_ShowFault, @function
@@ -456,26 +513,26 @@ LCD_ShowFault:
 /* frame size = 0 */
 /* stack size = 0 */
 .L__stack_usage = 0
-	ldi r24,lo8(.LC2)
-	ldi r25,hi8(.LC2)
-	jmp UART_SendString
+	ldi r24,lo8(.LC3)
+	ldi r25,hi8(.LC3)
+	call UART_SendString
+	ldi r24,lo8(g_lcdHandle)
+	ldi r25,hi8(g_lcdHandle)
+	call LCD_Aip31068_Clear
+	ldi r18,lo8(.LC4)
+	ldi r19,hi8(.LC4)
+	ldi r20,0
+	ldi r22,0
+	ldi r24,lo8(g_lcdHandle)
+	ldi r25,hi8(g_lcdHandle)
+	jmp LCD_Aip31068_WriteStringAt
 	.size	LCD_ShowFault, .-LCD_ShowFault
+	.local	is_drawn.1680
+	.comm	is_drawn.1680,1,1
 	.section	.rodata
 	.type	g_inputPins, @object
 	.size	g_inputPins, 30
 g_inputPins:
-	.byte	3
-	.byte	2
-	.byte	3
-	.byte	3
-	.byte	3
-	.byte	4
-	.byte	3
-	.byte	5
-	.byte	3
-	.byte	6
-	.byte	2
-	.byte	6
 	.byte	1
 	.byte	0
 	.byte	1
@@ -484,6 +541,18 @@ g_inputPins:
 	.byte	2
 	.byte	1
 	.byte	3
+	.byte	3
+	.byte	0
+	.byte	3
+	.byte	1
+	.byte	3
+	.byte	2
+	.byte	3
+	.byte	3
+	.byte	3
+	.byte	4
+	.byte	3
+	.byte	5
 	.byte	1
 	.byte	4
 	.byte	1
@@ -498,8 +567,10 @@ g_inputPins:
 	.type	g_lcdHandle, @object
 	.size	g_lcdHandle, 8
 g_lcdHandle:
-	.byte	39
-	.zero	7
+	.byte	62
+	.byte	2
+	.byte	16
+	.zero	5
 	.local	g_lastButtonState
 	.comm	g_lastButtonState,15,1
 	.local	g_buttonEvents

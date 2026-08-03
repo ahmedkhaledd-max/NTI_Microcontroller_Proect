@@ -195,6 +195,120 @@ UART_SendString:
 	pop r28
 	ret
 	.size	UART_SendString, .-UART_SendString
+.global	UART_SendNumber
+	.type	UART_SendNumber, @function
+UART_SendNumber:
+	push r14
+	push r15
+	push r16
+	push r17
+	push r28
+	push r29
+	rcall .
+	rcall .
+	rcall .
+	in r28,__SP_L__
+	in r29,__SP_H__
+/* prologue: function */
+/* frame size = 6 */
+/* stack size = 12 */
+.L__stack_usage = 12
+	sbiw r24,0
+	brne .L28
+	ldi r24,lo8(48)
+/* epilogue start */
+	adiw r28,6
+	in __tmp_reg__,__SREG__
+	cli
+	out __SP_H__,r29
+	out __SREG__,__tmp_reg__
+	out __SP_L__,r28
+	pop r29
+	pop r28
+	pop r17
+	pop r16
+	pop r15
+	pop r14
+	jmp UART_SendByte
+.L28:
+	movw r16,r28
+	subi r16,-1
+	sbci r17,-1
+	movw r30,r16
+	ldi r18,0
+	ldi r19,lo8(10)
+	mov r14,r19
+	mov r15,__zero_reg__
+.L31:
+	subi r18,lo8(-(1))
+	movw r22,r14
+	call __udivmodhi4
+	subi r24,lo8(-(48))
+	st Z+,r24
+	movw r24,r22
+	sbiw r24,0
+	brne .L29
+.L32:
+	mov r19,r18
+	lsr r19
+	mov r24,r18
+	ldi r25,0
+	movw r26,r16
+	add r26,r24
+	adc r27,r25
+	movw r14,r16
+.L30:
+	sbiw r26,1
+	mov r18,r14
+	sub r18,r16
+	cp r18,r19
+	brlo .L33
+	add r24,r16
+	adc r25,r17
+	movw r30,r24
+	st Z,__zero_reg__
+.L34:
+	movw r30,r16
+	ld r24,Z+
+	movw r16,r30
+	cpse r24,__zero_reg__
+	rjmp .L35
+	ldi r25,0
+	ldi r24,0
+/* epilogue start */
+	adiw r28,6
+	in __tmp_reg__,__SREG__
+	cli
+	out __SP_H__,r29
+	out __SREG__,__tmp_reg__
+	out __SP_L__,r28
+	pop r29
+	pop r28
+	pop r17
+	pop r16
+	pop r15
+	pop r14
+	ret
+.L29:
+	cpi r18,lo8(5)
+	brne .L31
+	rjmp .L32
+.L33:
+	movw r30,r14
+	ld r18,Z+
+	movw r14,r30
+	ld r22,X
+	movw r20,r30
+	subi r20,1
+	sbc r21,__zero_reg__
+	movw r30,r20
+	st Z,r22
+	st X,r18
+	rjmp .L30
+.L35:
+	call UART_SendByte
+	rjmp .L34
+	.size	UART_SendNumber, .-UART_SendNumber
 .global	UART_ReceiveString
 	.type	UART_ReceiveString, @function
 UART_ReceiveString:
@@ -203,20 +317,20 @@ UART_ReceiveString:
 /* stack size = 0 */
 .L__stack_usage = 0
 	sbiw r24,0
-	breq .L33
+	breq .L43
 	cp r22,__zero_reg__
 	cpc r23,__zero_reg__
-	breq .L33
+	breq .L43
 	movw r30,r24
 	ldi r19,0
 	ldi r18,0
 	subi r22,1
 	sbc r23,__zero_reg__
-.L29:
+.L39:
 	cp r18,r22
 	cpc r19,r23
-	brlo .L30
-.L31:
+	brlo .L40
+.L41:
 	add r24,r18
 	adc r25,r19
 	movw r30,r24
@@ -224,17 +338,17 @@ UART_ReceiveString:
 	ldi r25,0
 	ldi r24,0
 	ret
-.L30:
+.L40:
 	sbis 0xb,7
-	rjmp .L30
+	rjmp .L40
 	in r21,0xc
 	cp r20,r21
-	breq .L31
+	breq .L41
 	st Z+,r21
 	subi r18,-1
 	sbci r19,-1
-	rjmp .L29
-.L33:
+	rjmp .L39
+.L43:
 	ldi r24,lo8(1)
 	ldi r25,0
 /* epilogue start */
@@ -248,14 +362,14 @@ UART_SetRxCallBack:
 /* stack size = 0 */
 .L__stack_usage = 0
 	sbiw r24,0
-	breq .L39
+	breq .L49
 	sts UART_RxCallBack+1,r25
 	sts UART_RxCallBack,r24
 	sbi 0xa,7
 	ldi r25,0
 	ldi r24,0
 	ret
-.L39:
+.L49:
 	ldi r24,lo8(1)
 	ldi r25,0
 /* epilogue start */
@@ -289,9 +403,9 @@ __vector_13:
 	lds r30,UART_RxCallBack
 	lds r31,UART_RxCallBack+1
 	sbiw r30,0
-	breq .L40
+	breq .L50
 	icall
-.L40:
+.L50:
 /* epilogue start */
 	pop r31
 	pop r30

@@ -121,7 +121,7 @@ u8 Elevator_CalculateNextFloor(
         ElevatorDirection_t *direction);
 # 3 "LOGIC/elevator_system.c" 2
 # 1 "LOGIC/elevator_safety.h" 1
-# 15 "LOGIC/elevator_safety.h"
+# 14 "LOGIC/elevator_safety.h"
 typedef enum {
     FAULT_NONE = 0,
     FAULT_EMERGENCY_STOP_ID,
@@ -136,9 +136,9 @@ void Emergency_Stop(void);
 void Fault_Set(uint8_h id);
 void Fault_Clear(uint8_h id);
 
-# 28 "LOGIC/elevator_safety.h" 3 4
+# 27 "LOGIC/elevator_safety.h" 3 4
 _Bool 
-# 28 "LOGIC/elevator_safety.h"
+# 27 "LOGIC/elevator_safety.h"
     Fault_IsActive(void);
 
 void Elevator_Safety_Init(void);

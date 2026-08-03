@@ -92,10 +92,6 @@ STD_ReturnType ADC_ReadResult(uint16_h *puint16Result);
 STD_ReturnType ADC_ReadChannelBlocking(uint8_h uint8Channel, uint16_h *puint16Result);
 # 5 "MCL/ADC/adc.c" 2
 
-
-
-
-
 STD_ReturnType ADC_Init(const ADC_ConfigType *addConfig)
 {
     STD_ReturnType local_Status = E_OK;
@@ -152,18 +148,11 @@ STD_ReturnType ADC_Init(const ADC_ConfigType *addConfig)
     return local_Status;
 }
 
-
-
-
 STD_ReturnType ADC_DeInit(void)
 {
     (((*(volatile u8 *)0x26)) &= ~(1U << (7)));
-
     return E_OK;
 }
-
-
-
 
 STD_ReturnType ADC_StartConversion(uint8_h uint8Channel)
 {
@@ -180,6 +169,7 @@ STD_ReturnType ADC_StartConversion(uint8_h uint8Channel)
         (((*(volatile u8 *)0x27)) &= ~(1U << (2)));
         (((*(volatile u8 *)0x27)) &= ~(1U << (3)));
         (((*(volatile u8 *)0x27)) &= ~(1U << (4)));
+
         if ((((uint8Channel) >> (0)) & 1U))
         {
             (((*(volatile u8 *)0x27)) |= (1U << (0)));
@@ -199,9 +189,6 @@ STD_ReturnType ADC_StartConversion(uint8_h uint8Channel)
     return local_Status;
 }
 
-
-
-
 uint8_h ADC_IsConversionComplete(void)
 {
     uint8_h uint8Status = 1;
@@ -213,9 +200,6 @@ uint8_h ADC_IsConversionComplete(void)
 
     return uint8Status;
 }
-
-
-
 
 STD_ReturnType ADC_ReadResult(uint16_h *puint16Result)
 {
@@ -235,10 +219,6 @@ STD_ReturnType ADC_ReadResult(uint16_h *puint16Result)
 
     return local_Status;
 }
-
-
-
-
 
 STD_ReturnType ADC_ReadChannelBlocking(uint8_h uint8Channel, uint16_h *puint16Result)
 {

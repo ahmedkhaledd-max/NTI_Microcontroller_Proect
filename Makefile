@@ -17,16 +17,20 @@ C_SOURCES := \
     $(wildcard MCL/*/*/*.c) \
     $(wildcard HAL/*.c) \
     $(wildcard HAL/*/*.c) \
-    $(wildcard HAL/*/*/*.c)
+    $(wildcard HAL/*/*/*.c) \
+    $(wildcard LOGIC/*.c) \
+    $(wildcard LOGIC/*/*.c) \
+    $(wildcard LOGIC/*/*/*.c)
 
 OBJS   := $(patsubst %.c,build/%.o,$(C_SOURCES))
 DEPS   := $(patsubst %.c,build/%.d,$(C_SOURCES))
 TARGET := build/firmware
 
-# Auto include folders (for #include "gpio.h" in MCL/GPIO/)
+# Auto include folders
 INCLUDE_DIRS := include src LOGIC Service \
-    $(sort $(dir $(wildcard MCL/*/*.h)) $(wildcard MCL/*/*/*.h)) \
-    $(sort $(dir $(wildcard HAL/*/*.h)) $(wildcard HAL/*/*/*.h))
+    $(sort $(dir $(wildcard LOGIC/*.h)) $(dir $(wildcard LOGIC/*/*.h))) \
+    $(sort $(dir $(wildcard MCL/*/*.h)) $(dir $(wildcard MCL/*/*/*.h))) \
+    $(sort $(dir $(wildcard HAL/*/*.h)) $(dir $(wildcard HAL/*/*/*.h)))
 CFLAGS += $(addprefix -I,$(INCLUDE_DIRS))
 
 # دالة لإنشاء المجلدات بأمر متوافق مع نظام Windows

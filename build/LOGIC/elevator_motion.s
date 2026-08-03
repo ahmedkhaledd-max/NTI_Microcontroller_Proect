@@ -25,6 +25,10 @@ Motion_Update:
 	ldi r24,lo8(3)
 	jmp ADC_Read
 	.size	Motion_Update, .-Motion_Update
+	.section	.rodata.str1.1,"aMS",@progbits,1
+.LC0:
+	.string	"MOTION: Stopped\r\n"
+	.text
 .global	Motion_Stop
 	.type	Motion_Stop, @function
 Motion_Stop:
@@ -32,6 +36,9 @@ Motion_Stop:
 /* frame size = 0 */
 /* stack size = 0 */
 .L__stack_usage = 0
+	ldi r24,lo8(.LC0)
+	ldi r25,hi8(.LC0)
+	call Serial_SendString
 	ldi r20,0
 	ldi r22,lo8(4)
 	ldi r24,0
@@ -41,6 +48,10 @@ Motion_Stop:
 	ldi r24,0
 	jmp GPIO_SetPinValue
 	.size	Motion_Stop, .-Motion_Stop
+	.section	.rodata.str1.1
+.LC1:
+	.string	"DOOR: Opening\r\n"
+	.text
 .global	Door_Open
 	.type	Door_Open, @function
 Door_Open:
@@ -48,6 +59,9 @@ Door_Open:
 /* frame size = 0 */
 /* stack size = 0 */
 .L__stack_usage = 0
+	ldi r24,lo8(.LC1)
+	ldi r25,hi8(.LC1)
+	call Serial_SendString
 	ldi r20,lo8(1)
 	ldi r22,lo8(6)
 	ldi r24,0
@@ -57,6 +71,10 @@ Door_Open:
 	ldi r24,0
 	jmp GPIO_SetPinValue
 	.size	Door_Open, .-Door_Open
+	.section	.rodata.str1.1
+.LC2:
+	.string	"DOOR: Closing\r\n"
+	.text
 .global	Door_Close
 	.type	Door_Close, @function
 Door_Close:
@@ -64,6 +82,9 @@ Door_Close:
 /* frame size = 0 */
 /* stack size = 0 */
 .L__stack_usage = 0
+	ldi r24,lo8(.LC2)
+	ldi r25,hi8(.LC2)
+	call Serial_SendString
 	ldi r20,0
 	ldi r22,lo8(6)
 	ldi r24,0
@@ -115,6 +136,12 @@ Elevator_GetCurPosition:
 /* epilogue start */
 	ret
 	.size	Elevator_GetCurPosition, .-Elevator_GetCurPosition
+	.section	.rodata.str1.1
+.LC3:
+	.string	"MOTION: Moving UP\r\n"
+.LC4:
+	.string	"MOTION: Moving DOWN\r\n"
+	.text
 .global	Motion_GoToFloor
 	.type	Motion_GoToFloor, @function
 Motion_GoToFloor:
@@ -127,6 +154,9 @@ Motion_GoToFloor:
 	call Elevator_GetCurPosition
 	cp r24,r28
 	brsh .L13
+	ldi r24,lo8(.LC3)
+	ldi r25,hi8(.LC3)
+	call Serial_SendString
 	ldi r20,lo8(1)
 	ldi r22,lo8(4)
 	ldi r24,0
@@ -141,6 +171,9 @@ Motion_GoToFloor:
 .L13:
 	cp r28,r24
 	brsh .L12
+	ldi r24,lo8(.LC4)
+	ldi r25,hi8(.LC4)
+	call Serial_SendString
 	ldi r20,0
 	ldi r22,lo8(4)
 	ldi r24,0
@@ -189,3 +222,4 @@ Elevator_MoveToFloor:
 	jmp Motion_GoToFloor
 	.size	Elevator_MoveToFloor, .-Elevator_MoveToFloor
 	.ident	"GCC: (GNU) 7.3.0"
+.global __do_copy_data

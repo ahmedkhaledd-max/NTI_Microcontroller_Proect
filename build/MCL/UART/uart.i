@@ -323,7 +323,8 @@ STD_ReturnType UART_ReceiveByteNonBlocking(uint8_h *puint8Data);
 
 
 STD_ReturnType UART_SendString(const uint8_h *pString);
-# 152 "MCL/UART/uart_interface.h"
+STD_ReturnType UART_SendNumber(uint16_h number);
+# 153 "MCL/UART/uart_interface.h"
 STD_ReturnType UART_ReceiveString(uint8_h *buffer, uint16_h maxLength, uint8_h terminator);
 
 
@@ -511,6 +512,35 @@ STD_ReturnType UART_SendString(const uint8_h *pString)
 }
 
 
+STD_ReturnType UART_SendNumber(uint16_h number)
+{
+    uint8_h buffer[6U];
+    uint8_h index = 0U;
+
+    if (number == 0U)
+    {
+        return UART_SendByte((uint8_h)'0');
+    }
+
+    while ((number > 0U) && (index < (sizeof(buffer) - 1U)))
+    {
+        buffer[index++] = (uint8_h)('0' + (number % 10U));
+        number /= 10U;
+    }
+
+
+    for (uint8_h i = 0U; i < (index / 2U); i++)
+    {
+        uint8_h temp = buffer[i];
+        buffer[i] = buffer[index - 1U - i];
+        buffer[index - 1U - i] = temp;
+    }
+    buffer[index] = '\0';
+
+    return UART_SendString(buffer);
+}
+
+
 STD_ReturnType UART_ReceiveString(uint8_h *buffer, uint16_h maxLength, uint8_h terminator)
 {
     uint16_h local_Index = 0U;
@@ -521,7 +551,7 @@ STD_ReturnType UART_ReceiveString(uint8_h *buffer, uint16_h maxLength, uint8_h t
     {
         return E_NOK;
     }
-# 222 "MCL/UART/uart.c"
+# 251 "MCL/UART/uart.c"
     while (local_Index < (uint16_h)(maxLength - 1U))
     {
         if (UART_ReceiveByte(&local_Received) != E_OK)
@@ -570,10 +600,10 @@ STD_ReturnType UART_SetRxCallBack(UART_RxCallBackType callBack)
 
 
 
-# 269 "MCL/UART/uart.c" 3
+# 298 "MCL/UART/uart.c" 3
 void __vector_13 (void) __attribute__ ((signal,used, externally_visible)) ; void __vector_13 (void)
 
-# 270 "MCL/UART/uart.c"
+# 299 "MCL/UART/uart.c"
 {
     uint8_h local_Data = (*(volatile u8 *)0x2C);
 

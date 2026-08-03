@@ -4,17 +4,19 @@
 #include "../MCL/GPIO/gpio_interface.h"
 #include "../MCL/UART/uart_interface.h"
 #include "../MCL/ADC/adc_interface.h"
+#include "../MCL/I2C/i2c_interface.h"
 #include "../HAL/LCD_Aip31068_i2c/lcd_aip31068_i2c.h"
 #include "elevator_io.h"
 
 static uint8_h g_buttonEvents[IO_BUTTON_COUNT];
 static uint8_h g_lastButtonState[IO_BUTTON_COUNT];
 
-#if defined(HAL_LCD_AIP31068_I2C_H) || defined(LCD_AIP31068_I2C_H)
+/* Handle شاشة الـ I2C LCD */
 static LCD_Aip31068_HandleType g_lcdHandle = {
-    .i2cAddress = 0x27
+    .i2cAddress = LCD_AIP31068_DEFAULT_ADDRESS, /* Address 0x3E أو 0x27 حسب المحاكاة */
+    .rows       = 2,
+    .cols       = 16
 };
-#endif
 
 typedef struct {
     uint8_h port;
@@ -23,17 +25,18 @@ typedef struct {
 
 /* خريطة توصيل الأزرار */
 static const PinConfig_t g_inputPins[IO_BUTTON_COUNT] = {
-    { GPIO_PORTD, GPIO_PIN2 }, /* Hall Up G    */
-    { GPIO_PORTD, GPIO_PIN3 }, /* Hall Up 1    */
-    { GPIO_PORTD, GPIO_PIN4 }, /* Hall Down 1  */
-    { GPIO_PORTD, GPIO_PIN5 }, /* Hall Up 2    */
-    { GPIO_PORTD, GPIO_PIN6 }, /* Hall Down 2  */
-    { GPIO_PORTC, GPIO_PIN6 }, /* Hall Down 3  */
-
     { GPIO_PORTB, GPIO_PIN0 }, /* Car Call G   */
     { GPIO_PORTB, GPIO_PIN1 }, /* Car Call 1   */
     { GPIO_PORTB, GPIO_PIN2 }, /* Car Call 2   */
     { GPIO_PORTB, GPIO_PIN3 }, /* Car Call 3   */
+
+    { GPIO_PORTD, GPIO_PIN0 }, /* Hall Up G    */
+    { GPIO_PORTD, GPIO_PIN1 }, /* Hall Up 1    */
+    { GPIO_PORTD, GPIO_PIN2 }, /* Hall Down 1  */
+    { GPIO_PORTD, GPIO_PIN3 }, /* Hall Up 2    */
+    { GPIO_PORTD, GPIO_PIN4 }, /* Hall Down 2  */
+    { GPIO_PORTD, GPIO_PIN5 }, /* Hall Down 3  */
+
     { GPIO_PORTB, GPIO_PIN4 }, /* Door Open    */
     { GPIO_PORTB, GPIO_PIN5 }, /* Door Close   */
     { GPIO_PORTB, GPIO_PIN6 }, /* Emerg Alarm  */
@@ -56,17 +59,21 @@ static void IO_DelayMs(uint16_h ms)
     }
 }
 
-/* --- قراءة قناة الـ ADC --- */
 uint16_h ADC_Read(uint8_h channel)
 {
-    channel &= 0x07; /* التأكد أن القناة بين 0 و 7 */
+    uint16_h timeout = 10000u;
+    
+    channel &= 0x07; 
     ADMUX = (ADMUX & 0xF0) | channel;
 
     /* بدء التحويل */
     ADCSRA |= (1 << ADSC);
 
-    /* الانتظار لحين اكتمال القراءة */
-    while (ADCSRA & (1 << ADSC));
+    /* الانتظار مع حماية Timeout لمنع التعليق */
+    while ((ADCSRA & (1 << ADSC)) && (timeout > 0u))
+    {
+        timeout--;
+    }
 
     return ADC;
 }
@@ -91,14 +98,14 @@ void IO_Init(void)
     (void)GPIO_SetPinDirection(IO_BUZZER_PORT, IO_BUZZER_PIN, GPIO_OUTPUT);
     (void)GPIO_SetPinValue(IO_BUZZER_PORT, IO_BUZZER_PIN, PIN_LOW);
 
-    /* 3. LEDs Init */
-    (void)GPIO_SetPinDirection(GPIO_PORTC, LED_UP_PIN, GPIO_OUTPUT);
-    (void)GPIO_SetPinDirection(GPIO_PORTC, LED_DOWN_PIN, GPIO_OUTPUT);
-    (void)GPIO_SetPinDirection(GPIO_PORTC, LED_OVERLOAD_PIN, GPIO_OUTPUT);
+    /* 3. LEDs Init (PC2, PC3, PC4) */
+    (void)GPIO_SetPinDirection(LED_UP_PORT, LED_UP_PIN, GPIO_OUTPUT);
+    (void)GPIO_SetPinDirection(LED_DOWN_PORT, LED_DOWN_PIN, GPIO_OUTPUT);
+    (void)GPIO_SetPinDirection(LED_OVERLOAD_PORT, LED_OVERLOAD_PIN, GPIO_OUTPUT);
     
-    (void)GPIO_SetPinValue(GPIO_PORTC, LED_UP_PIN, PIN_LOW);
-    (void)GPIO_SetPinValue(GPIO_PORTC, LED_DOWN_PIN, PIN_LOW);
-    (void)GPIO_SetPinValue(GPIO_PORTC, LED_OVERLOAD_PIN, PIN_LOW);
+    (void)GPIO_SetPinValue(LED_UP_PORT, LED_UP_PIN, PIN_LOW);
+    (void)GPIO_SetPinValue(LED_DOWN_PORT, LED_DOWN_PIN, PIN_LOW);
+    (void)GPIO_SetPinValue(LED_OVERLOAD_PORT, LED_OVERLOAD_PIN, PIN_LOW);
 
     /* 4. Motors Init */
     (void)GPIO_SetPinDirection(L298_PORT, HOIST_IN1_PIN, GPIO_OUTPUT);
@@ -111,7 +118,7 @@ void IO_Init(void)
     (void)GPIO_SetPinValue(L298_PORT, DOOR_IN3_PIN, PIN_LOW);
     (void)GPIO_SetPinValue(L298_PORT, DOOR_IN4_PIN, PIN_LOW);
 
-    /* 5. ADC Pins Init (PA0 - PA3) -- (الجزء المعدّل هنا) */
+    /* 5. ADC Pins Init (PA0 - PA3) */
     (void)GPIO_SetPinDirection(GPIO_PORTA, GPIO_PIN0, GPIO_INPUT);
     (void)GPIO_SetPinDirection(GPIO_PORTA, GPIO_PIN1, GPIO_INPUT);
     (void)GPIO_SetPinDirection(GPIO_PORTA, GPIO_PIN2, GPIO_INPUT);
@@ -133,10 +140,20 @@ void IO_Init(void)
         g_lastButtonState[index] = PIN_HIGH;
     }
 
-    /* 7. LCD Init */
-#if defined(HAL_LCD_AIP31068_I2C_H) || defined(LCD_AIP31068_I2C_H)
+    /* 7. I2C Master & LCD Init */
+    /* Enable internal pull-ups on the I2C bus lines for simulation and open-drain TWI behavior */
+    (void)GPIO_SetPinDirection(GPIO_PORTC, GPIO_PIN0, GPIO_INPUT);
+    (void)GPIO_SetPinValue(GPIO_PORTC, GPIO_PIN0, PIN_HIGH);
+    (void)GPIO_SetPinDirection(GPIO_PORTC, GPIO_PIN1, GPIO_INPUT);
+    (void)GPIO_SetPinValue(GPIO_PORTC, GPIO_PIN1, PIN_HIGH);
+
+    I2C_MasterConfigType i2cConfig = {
+        .sclFrequency = 100000UL /* 100 kHz */
+    };
+    (void)I2C_InitMaster(&i2cConfig);
+
     (void)LCD_Aip31068_Init(&g_lcdHandle);
-#endif
+    (void)LCD_Aip31068_Clear(&g_lcdHandle);
 }
 
 void IO_Update(void)
@@ -206,10 +223,20 @@ void Gong_Play(uint8_h type)
 
 void LCD_ShowStatus(void)
 {
-    Serial_SendString("STATUS: System Ready\r\n");
+    static uint8_h is_drawn = 0u;
+    
+    if (is_drawn == 0u)
+    {
+        Serial_SendString("STATUS: System Ready\r\n");
+        (void)LCD_Aip31068_Clear(&g_lcdHandle);
+        (void)LCD_Aip31068_WriteStringAt(&g_lcdHandle, 0, 0, (const uint8_h *)"ELEVATOR READY");
+        is_drawn = 1u;
+    }
 }
 
 void LCD_ShowFault(void)
 {
     Serial_SendString("FAULT: EMERGENCY FAULT!\r\n");
+    (void)LCD_Aip31068_Clear(&g_lcdHandle);
+    (void)LCD_Aip31068_WriteStringAt(&g_lcdHandle, 0, 0, (const uint8_h *)"!!! FAULT !!!");
 }

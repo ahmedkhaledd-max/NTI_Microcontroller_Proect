@@ -48,7 +48,7 @@ typedef enum
 
 
 
-# 1 "HAL/DC_Motor/../../MCL/GPIO/../../Service/STD_Types.h" 1
+# 1 "c:\\nti_microcontroller\\project\\service\\std_types.h" 1
 # 5 "HAL/DC_Motor/../../MCL/GPIO/gpio_interface.h" 2
 # 1 "HAL/DC_Motor/../../MCL/GPIO/gpio_registers.h" 1
 # 26 "HAL/DC_Motor/../../MCL/GPIO/gpio_registers.h"
@@ -77,7 +77,7 @@ STD_ReturnType GPIO_SetPortValue(uint8_h uint8Port, uint8_h uint8Value);
 
 
 
-# 1 "HAL/DC_Motor/../../MCL/Timer/../../Service/STD_Types.h" 1
+# 1 "c:\\nti_microcontroller\\project\\service\\std_types.h" 1
 # 5 "HAL/DC_Motor/../../MCL/Timer/timer_registers.h" 2
 # 5 "HAL/DC_Motor/dc_motor.c" 2
 # 1 "HAL/DC_Motor/dc_motor.h" 1

@@ -9,7 +9,6 @@
 #define FAULT_OVERLOAD         3u
 #define FAULT_TIMEOUT          4u
 
-/* عتبة قراءة الـ Overload (تساوي تقريباً 4V من أصل 5V) */
 #define OVERLOAD_ADC_THRESHOLD 800u 
 
 typedef enum {

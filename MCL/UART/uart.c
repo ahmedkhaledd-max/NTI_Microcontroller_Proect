@@ -201,6 +201,35 @@ STD_ReturnType UART_SendString(const uint8_h *pString)
 }
 
 
+STD_ReturnType UART_SendNumber(uint16_h number)
+{
+    uint8_h buffer[6U];
+    uint8_h index = 0U;
+
+    if (number == 0U)
+    {
+        return UART_SendByte((uint8_h)'0');
+    }
+
+    while ((number > 0U) && (index < (sizeof(buffer) - 1U)))
+    {
+        buffer[index++] = (uint8_h)('0' + (number % 10U));
+        number /= 10U;
+    }
+
+    /* Reverse the digits into a null-terminated string. */
+    for (uint8_h i = 0U; i < (index / 2U); i++)
+    {
+        uint8_h temp = buffer[i];
+        buffer[i] = buffer[index - 1U - i];
+        buffer[index - 1U - i] = temp;
+    }
+    buffer[index] = '\0';
+
+    return UART_SendString(buffer);
+}
+
+
 STD_ReturnType UART_ReceiveString(uint8_h *buffer, uint16_h maxLength, uint8_h terminator)
 {
     uint16_h local_Index    = 0U;

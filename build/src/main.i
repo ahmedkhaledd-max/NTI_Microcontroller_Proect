@@ -42,13 +42,21 @@ typedef enum
     E_NOK = 1
 } STD_ReturnType;
 # 2 "src/main.c" 2
-# 1 "src/../LOGIC/elevator_dispatch.h" 1
+# 1 "LOGIC/elevator_system.h" 1
 
 
 
-# 1 "src/../LOGIC/../Service/STD_Types.h" 1
-# 5 "src/../LOGIC/elevator_dispatch.h" 2
-# 22 "src/../LOGIC/elevator_dispatch.h"
+# 1 "LOGIC/../Service/STD_Types.h" 1
+# 5 "LOGIC/elevator_system.h" 2
+# 1 "c:\\users\\hp\\.platformio\\packages\\toolchain-atmelavr\\lib\\gcc\\avr\\7.3.0\\include\\stdbool.h" 1 3 4
+# 6 "LOGIC/elevator_system.h" 2
+
+void System_Init(void);
+void System_Update(void);
+void LogFault(uint8_h fault);
+# 3 "src/main.c" 2
+# 1 "LOGIC/elevator_dispatch.h" 1
+# 22 "LOGIC/elevator_dispatch.h"
 typedef enum
 {
     DIR_STOP = 0,
@@ -113,8 +121,8 @@ void Elevator_ClearCall(u8 floor);
 u8 Elevator_CalculateNextFloor(
         u8 currentFloor,
         ElevatorDirection_t *direction);
-# 3 "src/main.c" 2
-# 1 "src/../LOGIC/elevator_motion.h" 1
+# 4 "src/main.c" 2
+# 1 "LOGIC/elevator_motion.h" 1
 
 
 
@@ -233,20 +241,20 @@ typedef int64_t intmax_t;
 
 typedef uint64_t uintmax_t;
 # 10 "c:\\users\\hp\\.platformio\\packages\\toolchain-atmelavr\\lib\\gcc\\avr\\7.3.0\\include\\stdint.h" 2 3 4
-# 6 "src/../LOGIC/elevator_motion.h" 2
+# 6 "LOGIC/elevator_motion.h" 2
 
 
-# 1 "src/../LOGIC/../MCL/ADC/adc_interface.h" 1
+# 1 "LOGIC/../MCL/ADC/adc_interface.h" 1
 
 
 
-# 1 "src/../LOGIC/../MCL/ADC/../../Service/STD_Types.h" 1
-# 5 "src/../LOGIC/../MCL/ADC/adc_interface.h" 2
-# 1 "src/../LOGIC/../MCL/ADC/adc_registers.h" 1
-# 6 "src/../LOGIC/../MCL/ADC/adc_interface.h" 2
-# 38 "src/../LOGIC/../MCL/ADC/adc_interface.h"
+# 1 "LOGIC/../MCL/ADC/../../Service/STD_Types.h" 1
+# 5 "LOGIC/../MCL/ADC/adc_interface.h" 2
+# 1 "LOGIC/../MCL/ADC/adc_registers.h" 1
+# 6 "LOGIC/../MCL/ADC/adc_interface.h" 2
+# 38 "LOGIC/../MCL/ADC/adc_interface.h"
 
-# 38 "src/../LOGIC/../MCL/ADC/adc_interface.h"
+# 38 "LOGIC/../MCL/ADC/adc_interface.h"
 typedef struct
 {
     uint8_h uint8ReferenceVoltage;
@@ -287,9 +295,9 @@ uint8_h ADC_IsConversionComplete(void);
 
 
 STD_ReturnType ADC_ReadResult(uint16_h *puint16Result);
-# 86 "src/../LOGIC/../MCL/ADC/adc_interface.h"
+# 86 "LOGIC/../MCL/ADC/adc_interface.h"
 STD_ReturnType ADC_ReadChannelBlocking(uint8_h uint8Channel, uint16_h *puint16Result);
-# 9 "src/../LOGIC/elevator_motion.h" 2
+# 9 "LOGIC/elevator_motion.h" 2
 
 
 
@@ -329,15 +337,9 @@ void Elevator_OpenDoor(void);
 void Elevator_CloseDoor(void);
 void Elevator_StopMotion(void);
 void Elevator_MoveToFloor(uint8_h floor);
-# 4 "src/main.c" 2
-# 1 "src/../LOGIC/elevator_safety.h" 1
-
-
-
-
-# 1 "c:\\users\\hp\\.platformio\\packages\\toolchain-atmelavr\\lib\\gcc\\avr\\7.3.0\\include\\stdbool.h" 1 3 4
-# 6 "src/../LOGIC/elevator_safety.h" 2
-# 15 "src/../LOGIC/elevator_safety.h"
+# 5 "src/main.c" 2
+# 1 "LOGIC/elevator_safety.h" 1
+# 14 "LOGIC/elevator_safety.h"
 typedef enum {
     FAULT_NONE = 0,
     FAULT_EMERGENCY_STOP_ID,
@@ -352,23 +354,22 @@ void Emergency_Stop(void);
 void Fault_Set(uint8_h id);
 void Fault_Clear(uint8_h id);
 
-# 28 "src/../LOGIC/elevator_safety.h" 3 4
+# 27 "LOGIC/elevator_safety.h" 3 4
 _Bool 
-# 28 "src/../LOGIC/elevator_safety.h"
+# 27 "LOGIC/elevator_safety.h"
     Fault_IsActive(void);
 
 void Elevator_Safety_Init(void);
 FaultType_t Elevator_CheckFaults(void);
 void Elevator_LogFault(FaultType_t fault);
 void Elevator_SendTelemetry(void);
-# 5 "src/main.c" 2
+# 6 "src/main.c" 2
 # 1 "LOGIC/elevator_io.h" 1
 
 
 
 
-# 1 "LOGIC/../Service/STD_Types.h" 1
-# 6 "LOGIC/elevator_io.h" 2
+
 # 1 "LOGIC/../MCL/GPIO/gpio_interface.h" 1
 
 
@@ -398,7 +399,7 @@ STD_ReturnType GPIO_PinToggle(uint8_h uint8Port, uint8_h uint8Pin);
 STD_ReturnType GPIO_SetPinValue(uint8_h uint8Port, uint8_h uint8Pin, uint8_h uint8Value);
 STD_ReturnType GPIO_SetPortValue(uint8_h uint8Port, uint8_h uint8Value);
 # 7 "LOGIC/elevator_io.h" 2
-# 50 "LOGIC/elevator_io.h"
+# 57 "LOGIC/elevator_io.h"
 typedef enum {
     IO_BTN_CAR_CALL_G = 0,
     IO_BTN_CAR_CALL_1,
@@ -415,6 +416,8 @@ typedef enum {
     IO_BTN_DOOR_OPEN,
     IO_BTN_DOOR_CLOSE,
     IO_BTN_EMERG_ALARM,
+    IO_BTN_SAFETY_EDGE,
+    IO_BTN_EMERG_STOP,
 
     IO_BTN_COUNT
 } IO_Button_t;
@@ -443,334 +446,25 @@ void LCD_ShowStatus(void);
 void LCD_ShowFault(void);
 void Serial_SendString(const char *str);
 void Gong_Play(uint8_h type);
-# 6 "src/main.c" 2
-
-
-# 1 "c:\\users\\hp\\.platformio\\packages\\toolchain-atmelavr\\avr\\include\\util\\delay.h" 1 3
-# 44 "c:\\users\\hp\\.platformio\\packages\\toolchain-atmelavr\\avr\\include\\util\\delay.h" 3
-# 1 "c:\\users\\hp\\.platformio\\packages\\toolchain-atmelavr\\avr\\include\\inttypes.h" 1 3
-# 77 "c:\\users\\hp\\.platformio\\packages\\toolchain-atmelavr\\avr\\include\\inttypes.h" 3
-
-# 77 "c:\\users\\hp\\.platformio\\packages\\toolchain-atmelavr\\avr\\include\\inttypes.h" 3
-typedef int32_t int_farptr_t;
-
-
-
-typedef uint32_t uint_farptr_t;
-# 45 "c:\\users\\hp\\.platformio\\packages\\toolchain-atmelavr\\avr\\include\\util\\delay.h" 2 3
-# 1 "c:\\users\\hp\\.platformio\\packages\\toolchain-atmelavr\\avr\\include\\util\\delay_basic.h" 1 3
-# 40 "c:\\users\\hp\\.platformio\\packages\\toolchain-atmelavr\\avr\\include\\util\\delay_basic.h" 3
-static __inline__ void _delay_loop_1(uint8_t __count) __attribute__((__always_inline__));
-static __inline__ void _delay_loop_2(uint16_t __count) __attribute__((__always_inline__));
-# 80 "c:\\users\\hp\\.platformio\\packages\\toolchain-atmelavr\\avr\\include\\util\\delay_basic.h" 3
-void
-_delay_loop_1(uint8_t __count)
+# 7 "src/main.c" 2
+# 18 "src/main.c"
+static void Update_LCD_Display(ElevatorState_t state, u8 current_floor)
 {
- __asm__ volatile (
-  "1: dec %0" "\n\t"
-  "brne 1b"
-  : "=r" (__count)
-  : "0" (__count)
- );
-}
-# 102 "c:\\users\\hp\\.platformio\\packages\\toolchain-atmelavr\\avr\\include\\util\\delay_basic.h" 3
-void
-_delay_loop_2(uint16_t __count)
-{
- __asm__ volatile (
-  "1: sbiw %0,1" "\n\t"
-  "brne 1b"
-  : "=w" (__count)
-  : "0" (__count)
- );
-}
-# 46 "c:\\users\\hp\\.platformio\\packages\\toolchain-atmelavr\\avr\\include\\util\\delay.h" 2 3
-# 1 "c:\\users\\hp\\.platformio\\packages\\toolchain-atmelavr\\avr\\include\\math.h" 1 3
-# 127 "c:\\users\\hp\\.platformio\\packages\\toolchain-atmelavr\\avr\\include\\math.h" 3
-extern double cos(double __x) __attribute__((__const__));
 
-
-
-
-
-extern double sin(double __x) __attribute__((__const__));
-
-
-
-
-
-extern double tan(double __x) __attribute__((__const__));
-
-
-
-
-
-
-extern double fabs(double __x) __attribute__((__const__));
-
-
-
-
-
-
-extern double fmod(double __x, double __y) __attribute__((__const__));
-# 168 "c:\\users\\hp\\.platformio\\packages\\toolchain-atmelavr\\avr\\include\\math.h" 3
-extern double modf(double __x, double *__iptr);
-
-
-extern float modff (float __x, float *__iptr);
-
-
-
-
-extern double sqrt(double __x) __attribute__((__const__));
-
-
-extern float sqrtf (float) __attribute__((__const__));
-
-
-
-
-extern double cbrt(double __x) __attribute__((__const__));
-# 195 "c:\\users\\hp\\.platformio\\packages\\toolchain-atmelavr\\avr\\include\\math.h" 3
-extern double hypot (double __x, double __y) __attribute__((__const__));
-
-
-
-
-
-
-
-extern double square(double __x) __attribute__((__const__));
-
-
-
-
-
-
-extern double floor(double __x) __attribute__((__const__));
-
-
-
-
-
-
-extern double ceil(double __x) __attribute__((__const__));
-# 235 "c:\\users\\hp\\.platformio\\packages\\toolchain-atmelavr\\avr\\include\\math.h" 3
-extern double frexp(double __x, int *__pexp);
-
-
-
-
-
-
-
-extern double ldexp(double __x, int __exp) __attribute__((__const__));
-
-
-
-
-
-extern double exp(double __x) __attribute__((__const__));
-
-
-
-
-
-extern double cosh(double __x) __attribute__((__const__));
-
-
-
-
-
-extern double sinh(double __x) __attribute__((__const__));
-
-
-
-
-
-extern double tanh(double __x) __attribute__((__const__));
-
-
-
-
-
-
-
-extern double acos(double __x) __attribute__((__const__));
-
-
-
-
-
-
-
-extern double asin(double __x) __attribute__((__const__));
-
-
-
-
-
-
-extern double atan(double __x) __attribute__((__const__));
-# 299 "c:\\users\\hp\\.platformio\\packages\\toolchain-atmelavr\\avr\\include\\math.h" 3
-extern double atan2(double __y, double __x) __attribute__((__const__));
-
-
-
-
-
-extern double log(double __x) __attribute__((__const__));
-
-
-
-
-
-extern double log10(double __x) __attribute__((__const__));
-
-
-
-
-
-extern double pow(double __x, double __y) __attribute__((__const__));
-
-
-
-
-
-
-extern int isnan(double __x) __attribute__((__const__));
-# 334 "c:\\users\\hp\\.platformio\\packages\\toolchain-atmelavr\\avr\\include\\math.h" 3
-extern int isinf(double __x) __attribute__((__const__));
-
-
-
-
-
-
-__attribute__((__const__)) static inline int isfinite (double __x)
-{
-    unsigned char __exp;
-    __asm__ (
- "mov	%0, %C1		\n\t"
- "lsl	%0		\n\t"
- "mov	%0, %D1		\n\t"
- "rol	%0		"
- : "=r" (__exp)
- : "r" (__x) );
-    return __exp != 0xff;
+    Elevator_SendTelemetry();
+
+    if (state == STATE_EMERGENCY)
+    {
+        LCD_ShowFault();
+    }
+    else
+    {
+        LCD_ShowStatus();
+    }
 }
 
 
-
-
-
-
-__attribute__((__const__)) static inline double copysign (double __x, double __y)
-{
-    __asm__ (
- "bst	%D2, 7	\n\t"
- "bld	%D0, 7	"
- : "=r" (__x)
- : "0" (__x), "r" (__y) );
-    return __x;
-}
-# 377 "c:\\users\\hp\\.platformio\\packages\\toolchain-atmelavr\\avr\\include\\math.h" 3
-extern int signbit (double __x) __attribute__((__const__));
-
-
-
-
-
-
-extern double fdim (double __x, double __y) __attribute__((__const__));
-# 393 "c:\\users\\hp\\.platformio\\packages\\toolchain-atmelavr\\avr\\include\\math.h" 3
-extern double fma (double __x, double __y, double __z) __attribute__((__const__));
-
-
-
-
-
-
-
-extern double fmax (double __x, double __y) __attribute__((__const__));
-
-
-
-
-
-
-
-extern double fmin (double __x, double __y) __attribute__((__const__));
-
-
-
-
-
-
-extern double trunc (double __x) __attribute__((__const__));
-# 427 "c:\\users\\hp\\.platformio\\packages\\toolchain-atmelavr\\avr\\include\\math.h" 3
-extern double round (double __x) __attribute__((__const__));
-# 440 "c:\\users\\hp\\.platformio\\packages\\toolchain-atmelavr\\avr\\include\\math.h" 3
-extern long lround (double __x) __attribute__((__const__));
-# 454 "c:\\users\\hp\\.platformio\\packages\\toolchain-atmelavr\\avr\\include\\math.h" 3
-extern long lrint (double __x) __attribute__((__const__));
-# 47 "c:\\users\\hp\\.platformio\\packages\\toolchain-atmelavr\\avr\\include\\util\\delay.h" 2 3
-# 86 "c:\\users\\hp\\.platformio\\packages\\toolchain-atmelavr\\avr\\include\\util\\delay.h" 3
-static __inline__ void _delay_us(double __us) __attribute__((__always_inline__));
-static __inline__ void _delay_ms(double __ms) __attribute__((__always_inline__));
-# 165 "c:\\users\\hp\\.platformio\\packages\\toolchain-atmelavr\\avr\\include\\util\\delay.h" 3
-void
-_delay_ms(double __ms)
-{
- double __tmp ;
-
-
-
- uint32_t __ticks_dc;
- extern void __builtin_avr_delay_cycles(unsigned long);
- __tmp = ((
-# 174 "c:\\users\\hp\\.platformio\\packages\\toolchain-atmelavr\\avr\\include\\util\\delay.h"
-          16000000UL
-# 174 "c:\\users\\hp\\.platformio\\packages\\toolchain-atmelavr\\avr\\include\\util\\delay.h" 3
-               ) / 1e3) * __ms;
-# 184 "c:\\users\\hp\\.platformio\\packages\\toolchain-atmelavr\\avr\\include\\util\\delay.h" 3
-  __ticks_dc = (uint32_t)(ceil(fabs(__tmp)));
-
-
- __builtin_avr_delay_cycles(__ticks_dc);
-# 210 "c:\\users\\hp\\.platformio\\packages\\toolchain-atmelavr\\avr\\include\\util\\delay.h" 3
-}
-# 254 "c:\\users\\hp\\.platformio\\packages\\toolchain-atmelavr\\avr\\include\\util\\delay.h" 3
-void
-_delay_us(double __us)
-{
- double __tmp ;
-
-
-
- uint32_t __ticks_dc;
- extern void __builtin_avr_delay_cycles(unsigned long);
- __tmp = ((
-# 263 "c:\\users\\hp\\.platformio\\packages\\toolchain-atmelavr\\avr\\include\\util\\delay.h"
-          16000000UL
-# 263 "c:\\users\\hp\\.platformio\\packages\\toolchain-atmelavr\\avr\\include\\util\\delay.h" 3
-               ) / 1e6) * __us;
-# 273 "c:\\users\\hp\\.platformio\\packages\\toolchain-atmelavr\\avr\\include\\util\\delay.h" 3
-  __ticks_dc = (uint32_t)(ceil(fabs(__tmp)));
-
-
- __builtin_avr_delay_cycles(__ticks_dc);
-# 299 "c:\\users\\hp\\.platformio\\packages\\toolchain-atmelavr\\avr\\include\\util\\delay.h" 3
-}
-# 9 "src/main.c" 2
-
-
-
-
-
-# 13 "src/main.c"
-static void Process_Inputs(void)
+static void Process_Button_Inputs(void)
 {
 
     if (IO_GetButtonEvent(IO_BTN_CAR_CALL_G)) { Elevator_AddCall(0u, 0u); }
@@ -781,166 +475,167 @@ static void Process_Inputs(void)
 
     if (IO_GetButtonEvent(IO_BTN_HALL_UP_G)) { Elevator_AddCall(0u, 1u); }
     if (IO_GetButtonEvent(IO_BTN_HALL_UP_1)) { Elevator_AddCall(1u, 1u); }
-    if (IO_GetButtonEvent(IO_BTN_HALL_DOWN_1)) { Elevator_AddCall(1u, 2u); }
     if (IO_GetButtonEvent(IO_BTN_HALL_UP_2)) { Elevator_AddCall(2u, 1u); }
+
+
+    if (IO_GetButtonEvent(IO_BTN_HALL_DOWN_1)) { Elevator_AddCall(1u, 2u); }
     if (IO_GetButtonEvent(IO_BTN_HALL_DOWN_2)) { Elevator_AddCall(2u, 2u); }
     if (IO_GetButtonEvent(IO_BTN_HALL_DOWN_3)) { Elevator_AddCall(3u, 2u); }
-
-
-    if (IO_GetButtonEvent(IO_BTN_DOOR_OPEN)) { Elevator_OpenDoor(); }
-    if (IO_GetButtonEvent(IO_BTN_DOOR_CLOSE)) { Elevator_CloseDoor(); }
-
-
-    if (IO_GetButtonEvent(IO_BTN_EMERG_ALARM)) { Gong_Play(3u); }
 }
 
-static void Update_LEDs(ElevatorDirection_t dir, FaultType_t fault)
-{
-    if (fault != FAULT_NONE)
-    {
-        (void)GPIO_SetPinValue(2, 4, PIN_HIGH);
-        (void)GPIO_SetPinValue(2, 2, PIN_LOW);
-        (void)GPIO_SetPinValue(2, 3, PIN_LOW);
-    }
-    else
-    {
-        (void)GPIO_SetPinValue(2, 4, PIN_LOW);
 
-        if (dir == DIR_UP)
-        {
-            (void)GPIO_SetPinValue(2, 2, PIN_HIGH);
-            (void)GPIO_SetPinValue(2, 3, PIN_LOW);
-        }
-        else if (dir == DIR_DOWN)
-        {
-            (void)GPIO_SetPinValue(2, 2, PIN_LOW);
-            (void)GPIO_SetPinValue(2, 3, PIN_HIGH);
-        }
-        else
-        {
-            (void)GPIO_SetPinValue(2, 2, PIN_LOW);
-            (void)GPIO_SetPinValue(2, 3, PIN_LOW);
-        }
-    }
-}
+
 
 int main(void)
 {
-    ElevatorState_t elevator_state = STATE_IDLE;
-    ElevatorDirection_t direction = DIR_STOP;
-    FaultType_t fault = FAULT_NONE;
+
+    IO_Init();
+    Elevator_Motion_Init();
+    Elevator_Safety_Init();
+    Elevator_Dispatch_Init();
+    System_Init();
+
+
+    ElevatorState_t current_state = STATE_IDLE;
+    ElevatorDirection_t current_dir = DIR_STOP;
     u8 current_floor = 0u;
     u8 target_floor = 0u;
     u16 door_timer = 0u;
+    FaultType_t active_fault = FAULT_NONE;
 
-
-    IO_Init();
-    Elevator_Dispatch_Init();
-    Elevator_Motion_Init();
-    Safety_Init();
 
     LCD_ShowStatus();
 
-    current_floor = Elevator_GetCurPosition();
-    target_floor = current_floor;
 
     while (1)
     {
 
         IO_Update();
+        System_Update();
         Motion_Update();
-        Safety_Update();
-        Process_Inputs();
-
-
-        fault = Elevator_CheckFaults();
-        if (fault != FAULT_NONE)
-        {
-            Elevator_LogFault(fault);
-            Elevator_StopMotion();
-            elevator_state = STATE_EMERGENCY;
-            LCD_ShowFault();
-            Gong_Play(3u);
-            Update_LEDs(DIR_STOP, fault);
-            Elevator_SendTelemetry();
-            _delay_ms(10);
-            continue;
-        }
-        else if (elevator_state == STATE_EMERGENCY)
-        {
-
-            elevator_state = STATE_IDLE;
-            LCD_ShowStatus();
-        }
 
         current_floor = Elevator_GetCurPosition();
 
 
-        switch (elevator_state)
+        active_fault = Elevator_CheckFaults();
+
+        if (active_fault != FAULT_NONE)
+        {
+
+            if (current_state != STATE_EMERGENCY)
+            {
+                Elevator_StopMotion();
+                Elevator_LogFault(active_fault);
+                (void)GPIO_SetPinValue(2, 4, PIN_HIGH);
+                current_state = STATE_EMERGENCY;
+            }
+        }
+
+
+        Process_Button_Inputs();
+
+
+        switch (current_state)
         {
             case STATE_IDLE:
-                target_floor = Elevator_CalculateNextFloor(current_floor, &direction);
-                Update_LEDs(direction, FAULT_NONE);
 
-                if (target_floor != current_floor)
+                (void)GPIO_SetPinValue(2, 2, PIN_LOW);
+                (void)GPIO_SetPinValue(2, 3, PIN_LOW);
+                (void)GPIO_SetPinValue(2, 4, PIN_LOW);
+
+
+                target_floor = Elevator_CalculateNextFloor(current_floor, &current_dir);
+
+
+                if (current_dir != DIR_STOP && target_floor != current_floor)
                 {
+                    Elevator_CloseDoor();
                     Elevator_MoveToFloor(target_floor);
-                    elevator_state = STATE_MOVING;
+
+
+                    if (current_dir == DIR_UP)
+                    {
+                        (void)GPIO_SetPinValue(2, 2, PIN_HIGH);
+                        (void)GPIO_SetPinValue(2, 3, PIN_LOW);
+                    }
+                    else if (current_dir == DIR_DOWN)
+                    {
+                        (void)GPIO_SetPinValue(2, 2, PIN_LOW);
+                        (void)GPIO_SetPinValue(2, 3, PIN_HIGH);
+                    }
+
+                    current_state = STATE_MOVING;
+                }
+
+                else if (target_floor == current_floor && IO_GetButtonEvent(IO_BTN_DOOR_OPEN))
+                {
+                    Elevator_ClearCall(current_floor);
+                    Elevator_OpenDoor();
+                    door_timer = 0u;
+                    current_state = STATE_DOOR_OPEN;
                 }
                 break;
 
             case STATE_MOVING:
-                Update_LEDs(direction, FAULT_NONE);
-
-
-                Elevator_MoveToFloor(target_floor);
 
                 if (current_floor == target_floor)
                 {
                     Elevator_StopMotion();
                     Elevator_ClearCall(current_floor);
-                    Gong_Play(1u);
+
+
+                    (void)GPIO_SetPinValue(2, 2, PIN_LOW);
+                    (void)GPIO_SetPinValue(2, 3, PIN_LOW);
+
+
                     Elevator_OpenDoor();
                     door_timer = 0u;
-                    elevator_state = STATE_DOOR_OPEN;
-                    direction = DIR_STOP;
-                    Update_LEDs(direction, FAULT_NONE);
+                    current_state = STATE_DOOR_OPEN;
+                }
+                else
+                {
+
+                    Elevator_MoveToFloor(target_floor);
                 }
                 break;
 
             case STATE_DOOR_OPEN:
-                if (door_timer >= 100u)
+                door_timer++;
+
+
+                if (IO_GetButtonEvent(IO_BTN_DOOR_CLOSE) || (door_timer >= 300u))
                 {
                     Elevator_CloseDoor();
                     door_timer = 0u;
-                    elevator_state = STATE_DOOR_CLOSING;
+                    current_state = STATE_IDLE;
                 }
-                break;
 
-            case STATE_DOOR_CLOSING:
-                if (door_timer >= 50u)
+                else if (IO_GetButtonEvent(IO_BTN_DOOR_OPEN))
                 {
-                    Elevator_StopMotion();
-                    elevator_state = STATE_IDLE;
+                    Elevator_OpenDoor();
+                    door_timer = 0u;
                 }
                 break;
 
             case STATE_EMERGENCY:
+
+                Elevator_StopMotion();
+
+
+                if (Elevator_CheckFaults() == FAULT_NONE)
+                {
+                    (void)GPIO_SetPinValue(2, 4, PIN_LOW);
+                    current_state = STATE_IDLE;
+                }
                 break;
 
             default:
+                current_state = STATE_IDLE;
                 break;
         }
 
-        if ((elevator_state == STATE_DOOR_OPEN) || (elevator_state == STATE_DOOR_CLOSING))
-        {
-            door_timer++;
-        }
 
-        Elevator_SendTelemetry();
-
-
-        _delay_ms(10);
+        Update_LCD_Display(current_state, current_floor);
     }
 
     return 0;

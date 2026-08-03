@@ -140,6 +140,7 @@ STD_ReturnType UART_ReceiveByteNonBlocking(uint8_h *puint8Data);
  * @return STD_ReturnType  E_OK/E_NOK.
  */
 STD_ReturnType UART_SendString(const uint8_h *pString);
+STD_ReturnType UART_SendNumber(uint16_h number);
 
 /**
  * @brief  Receives characters into 'buffer' until the terminator byte is seen or

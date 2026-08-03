@@ -46,7 +46,6 @@ static void Process_Button_Inputs(void)
 
     /* 3. أزرار الأدوار الخارجية - نزول (Hall Down) */
     if (IO_GetButtonEvent(IO_BTN_HALL_DOWN_1)) { Elevator_AddCall(1u, CALL_TYPE_HALL_DOWN); }
-    if (IO_GetButtonEvent(IO_BTN_HALL_UP_2))   { Elevator_AddCall(2u, CALL_TYPE_HALL_UP); }
     if (IO_GetButtonEvent(IO_BTN_HALL_DOWN_2)) { Elevator_AddCall(2u, CALL_TYPE_HALL_DOWN); }
     if (IO_GetButtonEvent(IO_BTN_HALL_DOWN_3)) { Elevator_AddCall(3u, CALL_TYPE_HALL_DOWN); }
 }
@@ -92,7 +91,7 @@ int main(void)
             /* عند وجود خطأ جديد، قم بإيقاف المحركات والدخول في حالة الطوارئ */
             if (current_state != STATE_EMERGENCY)
             {
-            Elevator_StopMotion();
+                Elevator_StopMotion();
                 Elevator_LogFault(active_fault);
                 (void)GPIO_SetPinValue(LED_OVERLOAD_PORT, LED_OVERLOAD_PIN, PIN_HIGH);
                 current_state = STATE_EMERGENCY;

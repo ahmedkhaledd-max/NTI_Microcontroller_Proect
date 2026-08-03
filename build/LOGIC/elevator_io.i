@@ -351,7 +351,8 @@ STD_ReturnType UART_ReceiveByteNonBlocking(uint8_h *puint8Data);
 
 
 STD_ReturnType UART_SendString(const uint8_h *pString);
-# 152 "LOGIC/../MCL/UART/uart_interface.h"
+STD_ReturnType UART_SendNumber(uint16_h number);
+# 153 "LOGIC/../MCL/UART/uart_interface.h"
 STD_ReturnType UART_ReceiveString(uint8_h *buffer, uint16_h maxLength, uint8_h terminator);
 
 
@@ -414,21 +415,15 @@ STD_ReturnType ADC_ReadResult(uint16_h *puint16Result);
 # 86 "LOGIC/../MCL/ADC/adc_interface.h"
 STD_ReturnType ADC_ReadChannelBlocking(uint8_h uint8Channel, uint16_h *puint16Result);
 # 7 "LOGIC/elevator_io.c" 2
-# 1 "LOGIC/../HAL/LCD_Aip31068_i2c/lcd_aip31068_i2c.h" 1
+# 1 "LOGIC/../MCL/I2C/i2c_interface.h" 1
 
 
 
-# 1 "c:\\nti_microcontroller\\project\\service\\std_types.h" 1
-# 5 "LOGIC/../HAL/LCD_Aip31068_i2c/lcd_aip31068_i2c.h" 2
-# 1 "c:\\nti_microcontroller\\project\\mcl\\i2c\\i2c_interface.h" 1
-
-
-
-# 1 "c:\\nti_microcontroller\\project\\service\\std_types.h" 1
-# 5 "c:\\nti_microcontroller\\project\\mcl\\i2c\\i2c_interface.h" 2
-# 1 "c:\\nti_microcontroller\\project\\mcl\\i2c\\i2c_registers.h" 1
-# 6 "c:\\nti_microcontroller\\project\\mcl\\i2c\\i2c_interface.h" 2
-# 40 "c:\\nti_microcontroller\\project\\mcl\\i2c\\i2c_interface.h"
+# 1 "LOGIC/../MCL/I2C/../../Service/STD_Types.h" 1
+# 5 "LOGIC/../MCL/I2C/i2c_interface.h" 2
+# 1 "LOGIC/../MCL/I2C/i2c_registers.h" 1
+# 6 "LOGIC/../MCL/I2C/i2c_interface.h" 2
+# 40 "LOGIC/../MCL/I2C/i2c_interface.h"
 typedef enum
 {
     I2C_NACK = 0,
@@ -456,9 +451,9 @@ typedef struct
     uint8_h ownAddress;
     uint8_h enableGeneralCall;
 } I2C_SlaveConfigType;
-# 78 "c:\\nti_microcontroller\\project\\mcl\\i2c\\i2c_interface.h"
+# 78 "LOGIC/../MCL/I2C/i2c_interface.h"
 STD_ReturnType I2C_InitMaster(const I2C_MasterConfigType *addConfig);
-# 87 "c:\\nti_microcontroller\\project\\mcl\\i2c\\i2c_interface.h"
+# 87 "LOGIC/../MCL/I2C/i2c_interface.h"
 STD_ReturnType I2C_InitSlave(const I2C_SlaveConfigType *addConfig);
 
 
@@ -508,10 +503,18 @@ STD_ReturnType I2C_ReadByteWithNack(uint8_h *puint8Data);
 
 
 uint8_h I2C_GetStatus(void);
-# 144 "c:\\nti_microcontroller\\project\\mcl\\i2c\\i2c_interface.h"
+# 144 "LOGIC/../MCL/I2C/i2c_interface.h"
 STD_ReturnType I2C_MasterWrite(uint8_h slaveAddress, const uint8_h *pData, uint16_h length);
-# 154 "c:\\nti_microcontroller\\project\\mcl\\i2c\\i2c_interface.h"
+# 154 "LOGIC/../MCL/I2C/i2c_interface.h"
 STD_ReturnType I2C_MasterRead(uint8_h slaveAddress, uint8_h *pBuffer, uint16_h length);
+# 8 "LOGIC/elevator_io.c" 2
+# 1 "LOGIC/../HAL/LCD_Aip31068_i2c/lcd_aip31068_i2c.h" 1
+
+
+
+# 1 "c:\\nti_microcontroller\\project\\service\\std_types.h" 1
+# 5 "LOGIC/../HAL/LCD_Aip31068_i2c/lcd_aip31068_i2c.h" 2
+# 1 "c:\\nti_microcontroller\\project\\mcl\\i2c\\i2c_interface.h" 1
 # 6 "LOGIC/../HAL/LCD_Aip31068_i2c/lcd_aip31068_i2c.h" 2
 # 101 "LOGIC/../HAL/LCD_Aip31068_i2c/lcd_aip31068_i2c.h"
 typedef struct
@@ -595,9 +598,9 @@ STD_ReturnType LCD_Aip31068_ShiftDisplay(LCD_Aip31068_HandleType *handle, uint8_
 # 252 "LOGIC/../HAL/LCD_Aip31068_i2c/lcd_aip31068_i2c.h"
 STD_ReturnType LCD_Aip31068_CreateCustomChar(LCD_Aip31068_HandleType *handle,
                                              uint8_h location, const uint8_h *pPattern);
-# 8 "LOGIC/elevator_io.c" 2
+# 9 "LOGIC/elevator_io.c" 2
 # 1 "LOGIC/elevator_io.h" 1
-# 50 "LOGIC/elevator_io.h"
+# 57 "LOGIC/elevator_io.h"
 typedef enum {
     IO_BTN_CAR_CALL_G = 0,
     IO_BTN_CAR_CALL_1,
@@ -614,6 +617,8 @@ typedef enum {
     IO_BTN_DOOR_OPEN,
     IO_BTN_DOOR_CLOSE,
     IO_BTN_EMERG_ALARM,
+    IO_BTN_SAFETY_EDGE,
+    IO_BTN_EMERG_STOP,
 
     IO_BTN_COUNT
 } IO_Button_t;
@@ -642,16 +647,17 @@ void LCD_ShowStatus(void);
 void LCD_ShowFault(void);
 void Serial_SendString(const char *str);
 void Gong_Play(uint8_h type);
-# 9 "LOGIC/elevator_io.c" 2
+# 10 "LOGIC/elevator_io.c" 2
 
 static uint8_h g_buttonEvents[15u];
 static uint8_h g_lastButtonState[15u];
 
 
 static LCD_Aip31068_HandleType g_lcdHandle = {
-    .i2cAddress = 0x27
+    .i2cAddress = 0x3E,
+    .rows = 2,
+    .cols = 16
 };
-
 
 typedef struct {
     uint8_h port;
@@ -660,17 +666,18 @@ typedef struct {
 
 
 static const PinConfig_t g_inputPins[15u] = {
-    { 3, 2 },
-    { 3, 3 },
-    { 3, 4 },
-    { 3, 5 },
-    { 3, 6 },
-    { 2, 6 },
-
     { 1, 0 },
     { 1, 1 },
     { 1, 2 },
     { 1, 3 },
+
+    { 3, 0 },
+    { 3, 1 },
+    { 3, 2 },
+    { 3, 3 },
+    { 3, 4 },
+    { 3, 5 },
+
     { 1, 4 },
     { 1, 5 },
     { 1, 6 },
@@ -693,46 +700,50 @@ static void IO_DelayMs(uint16_h ms)
     }
 }
 
-
 uint16_h ADC_Read(uint8_h channel)
 {
+    uint16_h timeout = 10000u;
+
     channel &= 0x07;
     
-# 63 "LOGIC/elevator_io.c" 3
+# 67 "LOGIC/elevator_io.c" 3
    (*(volatile uint8_t *)((0x07) + 0x20)) 
-# 63 "LOGIC/elevator_io.c"
+# 67 "LOGIC/elevator_io.c"
          = (
-# 63 "LOGIC/elevator_io.c" 3
+# 67 "LOGIC/elevator_io.c" 3
             (*(volatile uint8_t *)((0x07) + 0x20)) 
-# 63 "LOGIC/elevator_io.c"
+# 67 "LOGIC/elevator_io.c"
                   & 0xF0) | channel;
 
 
     
-# 66 "LOGIC/elevator_io.c" 3
+# 70 "LOGIC/elevator_io.c" 3
    (*(volatile uint8_t *)((0x06) + 0x20)) 
-# 66 "LOGIC/elevator_io.c"
+# 70 "LOGIC/elevator_io.c"
           |= (1 << 
-# 66 "LOGIC/elevator_io.c" 3
+# 70 "LOGIC/elevator_io.c" 3
                    6
-# 66 "LOGIC/elevator_io.c"
+# 70 "LOGIC/elevator_io.c"
                        );
 
 
-    while (
-# 69 "LOGIC/elevator_io.c" 3
-          (*(volatile uint8_t *)((0x06) + 0x20)) 
-# 69 "LOGIC/elevator_io.c"
-                 & (1 << 
-# 69 "LOGIC/elevator_io.c" 3
-                         6
-# 69 "LOGIC/elevator_io.c"
-                             ));
+    while ((
+# 73 "LOGIC/elevator_io.c" 3
+           (*(volatile uint8_t *)((0x06) + 0x20)) 
+# 73 "LOGIC/elevator_io.c"
+                  & (1 << 
+# 73 "LOGIC/elevator_io.c" 3
+                          6
+# 73 "LOGIC/elevator_io.c"
+                              )) && (timeout > 0u))
+    {
+        timeout--;
+    }
 
     return 
-# 71 "LOGIC/elevator_io.c" 3
+# 78 "LOGIC/elevator_io.c" 3
           (*(volatile uint16_t *)((0x04) + 0x20))
-# 71 "LOGIC/elevator_io.c"
+# 78 "LOGIC/elevator_io.c"
              ;
 }
 
@@ -800,8 +811,18 @@ void IO_Init(void)
 
 
 
-    (void)LCD_Aip31068_Init(&g_lcdHandle);
+    (void)GPIO_SetPinDirection(2, 0, 0);
+    (void)GPIO_SetPinValue(2, 0, PIN_HIGH);
+    (void)GPIO_SetPinDirection(2, 1, 0);
+    (void)GPIO_SetPinValue(2, 1, PIN_HIGH);
 
+    I2C_MasterConfigType i2cConfig = {
+        .sclFrequency = 100000UL
+    };
+    (void)I2C_InitMaster(&i2cConfig);
+
+    (void)LCD_Aip31068_Init(&g_lcdHandle);
+    (void)LCD_Aip31068_Clear(&g_lcdHandle);
 }
 
 void IO_Update(void)
@@ -871,10 +892,20 @@ void Gong_Play(uint8_h type)
 
 void LCD_ShowStatus(void)
 {
-    Serial_SendString("STATUS: System Ready\r\n");
+    static uint8_h is_drawn = 0u;
+
+    if (is_drawn == 0u)
+    {
+        Serial_SendString("STATUS: System Ready\r\n");
+        (void)LCD_Aip31068_Clear(&g_lcdHandle);
+        (void)LCD_Aip31068_WriteStringAt(&g_lcdHandle, 0, 0, (const uint8_h *)"ELEVATOR READY");
+        is_drawn = 1u;
+    }
 }
 
 void LCD_ShowFault(void)
 {
     Serial_SendString("FAULT: EMERGENCY FAULT!\r\n");
+    (void)LCD_Aip31068_Clear(&g_lcdHandle);
+    (void)LCD_Aip31068_WriteStringAt(&g_lcdHandle, 0, 0, (const uint8_h *)"!!! FAULT !!!");
 }

@@ -241,7 +241,7 @@ STD_ReturnType ADC_ReadResult(uint16_h *puint16Result);
 STD_ReturnType ADC_ReadChannelBlocking(uint8_h uint8Channel, uint16_h *puint16Result);
 # 5 "LOGIC/elevator_motion.c" 2
 # 1 "LOGIC/elevator_io.h" 1
-# 50 "LOGIC/elevator_io.h"
+# 57 "LOGIC/elevator_io.h"
 typedef enum {
     IO_BTN_CAR_CALL_G = 0,
     IO_BTN_CAR_CALL_1,
@@ -258,6 +258,8 @@ typedef enum {
     IO_BTN_DOOR_OPEN,
     IO_BTN_DOOR_CLOSE,
     IO_BTN_EMERG_ALARM,
+    IO_BTN_SAFETY_EDGE,
+    IO_BTN_EMERG_STOP,
 
     IO_BTN_COUNT
 } IO_Button_t;
@@ -325,6 +327,8 @@ void Elevator_StopMotion(void);
 void Elevator_MoveToFloor(uint8_h floor);
 # 7 "LOGIC/elevator_motion.c" 2
 
+
+
 static Motion_State_t g_motionState = MOTION_IDLE;
 static Door_State_t g_doorState = DOOR_CLOSED;
 static uint16_h g_doorPosition = 0u;
@@ -352,6 +356,7 @@ void Motion_GoToFloor(uint8_h floor)
     if (floor > current_floor)
     {
         g_motionState = MOTION_MOVING_UP;
+        Serial_SendString("MOTION: Moving UP\r\n");
 
         (void)GPIO_SetPinValue(0, 4, PIN_HIGH);
         (void)GPIO_SetPinValue(0, 5, PIN_LOW);
@@ -359,6 +364,7 @@ void Motion_GoToFloor(uint8_h floor)
     else if (floor < current_floor)
     {
         g_motionState = MOTION_MOVING_DOWN;
+        Serial_SendString("MOTION: Moving DOWN\r\n");
 
         (void)GPIO_SetPinValue(0, 4, PIN_LOW);
         (void)GPIO_SetPinValue(0, 5, PIN_HIGH);
@@ -368,6 +374,7 @@ void Motion_GoToFloor(uint8_h floor)
 void Motion_Stop(void)
 {
     g_motionState = MOTION_STOPPED;
+    Serial_SendString("MOTION: Stopped\r\n");
 
     (void)GPIO_SetPinValue(0, 4, PIN_LOW);
     (void)GPIO_SetPinValue(0, 5, PIN_LOW);
@@ -376,6 +383,7 @@ void Motion_Stop(void)
 void Door_Open(void)
 {
     g_doorState = DOOR_OPENING;
+    Serial_SendString("DOOR: Opening\r\n");
 
     (void)GPIO_SetPinValue(0, 6, PIN_HIGH);
     (void)GPIO_SetPinValue(0, 7, PIN_LOW);
@@ -384,6 +392,7 @@ void Door_Open(void)
 void Door_Close(void)
 {
     g_doorState = DOOR_CLOSING;
+    Serial_SendString("DOOR: Closing\r\n");
 
     (void)GPIO_SetPinValue(0, 6, PIN_LOW);
     (void)GPIO_SetPinValue(0, 7, PIN_HIGH);

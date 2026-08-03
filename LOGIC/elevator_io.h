@@ -30,11 +30,18 @@
 #define DOOR_IN3_PIN         GPIO_PIN6
 #define DOOR_IN4_PIN         GPIO_PIN7
 
-/* --- تعريفات القنوات التناظرية (ADC Channels / PORTA) --- */
-#define ADC_CAR_POSITION_CH     0u  /* PA0 */
-#define ADC_CAR_LOAD_CH         1u  /* PA1 */
-#define ADC_HOIST_CURRENT_CH    2u  /* PA2 */
-#define ADC_DOOR_POSITION_CH    3u  /* PA3 */
+/* --- تعريفات الأرجل الخاصة بها (GPIO Pins) --- */
+#define ADC_CAR_POSITION_PIN    GPIO_PIN0
+#define ADC_CAR_LOAD_PIN        GPIO_PIN1
+#define ADC_HOIST_CURRENT_PIN   GPIO_PIN2
+#define ADC_DOOR_POSITION_PIN   GPIO_PIN3
+
+/* --- تعريفات القنوات التناظرية (ADC Channels) --- */
+#define ADC_CAR_POSITION_CH     0u  /* PA0 - Channel 0 */
+#define ADC_CAR_LOAD_CH         1u  /* PA1 - Channel 1 */
+#define ADC_HOIST_CURRENT_CH    2u  /* PA2 - Channel 2 */
+#define ADC_DOOR_POSITION_CH    3u  /* PA3 - Channel 3 */
+
 
 /* --- تعريفات الـ LCD عبر I2C (Aip31068 / PC0-PC1) --- */
 #define LCD_I2C_PORT         GPIO_PORTC
@@ -63,7 +70,9 @@ typedef enum {
     IO_BTN_DOOR_OPEN,
     IO_BTN_DOOR_CLOSE,
     IO_BTN_EMERG_ALARM,
-    
+    IO_BTN_SAFETY_EDGE,
+    IO_BTN_EMERG_STOP,
+
     IO_BTN_COUNT /* عدد العناصر الكلي */
 } IO_Button_t;
 
