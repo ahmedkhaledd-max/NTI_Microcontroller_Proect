@@ -447,44 +447,6 @@ void LCD_ShowFault(void);
 void Serial_SendString(const char *str);
 void Gong_Play(uint8_h type);
 # 7 "src/main.c" 2
-# 18 "src/main.c"
-static void Update_LCD_Display(ElevatorState_t state, u8 current_floor)
-{
-
-    Elevator_SendTelemetry();
-
-    if (state == STATE_EMERGENCY)
-    {
-        LCD_ShowFault();
-    }
-    else
-    {
-        LCD_ShowStatus();
-    }
-}
-
-
-static void Process_Button_Inputs(void)
-{
-
-    if (IO_GetButtonEvent(IO_BTN_CAR_CALL_G)) { Elevator_AddCall(0u, 0u); }
-    if (IO_GetButtonEvent(IO_BTN_CAR_CALL_1)) { Elevator_AddCall(1u, 0u); }
-    if (IO_GetButtonEvent(IO_BTN_CAR_CALL_2)) { Elevator_AddCall(2u, 0u); }
-    if (IO_GetButtonEvent(IO_BTN_CAR_CALL_3)) { Elevator_AddCall(3u, 0u); }
-
-
-    if (IO_GetButtonEvent(IO_BTN_HALL_UP_G)) { Elevator_AddCall(0u, 1u); }
-    if (IO_GetButtonEvent(IO_BTN_HALL_UP_1)) { Elevator_AddCall(1u, 1u); }
-    if (IO_GetButtonEvent(IO_BTN_HALL_UP_2)) { Elevator_AddCall(2u, 1u); }
-
-
-    if (IO_GetButtonEvent(IO_BTN_HALL_DOWN_1)) { Elevator_AddCall(1u, 2u); }
-    if (IO_GetButtonEvent(IO_BTN_HALL_DOWN_2)) { Elevator_AddCall(2u, 2u); }
-    if (IO_GetButtonEvent(IO_BTN_HALL_DOWN_3)) { Elevator_AddCall(3u, 2u); }
-}
-
-
-
 
 int main(void)
 {
@@ -495,147 +457,12 @@ int main(void)
     Elevator_Dispatch_Init();
     System_Init();
 
-
-    ElevatorState_t current_state = STATE_IDLE;
-    ElevatorDirection_t current_dir = DIR_STOP;
-    u8 current_floor = 0u;
-    u8 target_floor = 0u;
-    u16 door_timer = 0u;
-    FaultType_t active_fault = FAULT_NONE;
-
-
     LCD_ShowStatus();
 
 
     while (1)
     {
-
-        IO_Update();
         System_Update();
-        Motion_Update();
-
-        current_floor = Elevator_GetCurPosition();
-
-
-        active_fault = Elevator_CheckFaults();
-
-        if (active_fault != FAULT_NONE)
-        {
-
-            if (current_state != STATE_EMERGENCY)
-            {
-                Elevator_StopMotion();
-                Elevator_LogFault(active_fault);
-                (void)GPIO_SetPinValue(2, 4, PIN_HIGH);
-                current_state = STATE_EMERGENCY;
-            }
-        }
-
-
-        Process_Button_Inputs();
-
-
-        switch (current_state)
-        {
-            case STATE_IDLE:
-
-                (void)GPIO_SetPinValue(2, 2, PIN_LOW);
-                (void)GPIO_SetPinValue(2, 3, PIN_LOW);
-                (void)GPIO_SetPinValue(2, 4, PIN_LOW);
-
-
-                target_floor = Elevator_CalculateNextFloor(current_floor, &current_dir);
-
-
-                if (current_dir != DIR_STOP && target_floor != current_floor)
-                {
-                    Elevator_CloseDoor();
-                    Elevator_MoveToFloor(target_floor);
-
-
-                    if (current_dir == DIR_UP)
-                    {
-                        (void)GPIO_SetPinValue(2, 2, PIN_HIGH);
-                        (void)GPIO_SetPinValue(2, 3, PIN_LOW);
-                    }
-                    else if (current_dir == DIR_DOWN)
-                    {
-                        (void)GPIO_SetPinValue(2, 2, PIN_LOW);
-                        (void)GPIO_SetPinValue(2, 3, PIN_HIGH);
-                    }
-
-                    current_state = STATE_MOVING;
-                }
-
-                else if (target_floor == current_floor && IO_GetButtonEvent(IO_BTN_DOOR_OPEN))
-                {
-                    Elevator_ClearCall(current_floor);
-                    Elevator_OpenDoor();
-                    door_timer = 0u;
-                    current_state = STATE_DOOR_OPEN;
-                }
-                break;
-
-            case STATE_MOVING:
-
-                if (current_floor == target_floor)
-                {
-                    Elevator_StopMotion();
-                    Elevator_ClearCall(current_floor);
-
-
-                    (void)GPIO_SetPinValue(2, 2, PIN_LOW);
-                    (void)GPIO_SetPinValue(2, 3, PIN_LOW);
-
-
-                    Elevator_OpenDoor();
-                    door_timer = 0u;
-                    current_state = STATE_DOOR_OPEN;
-                }
-                else
-                {
-
-                    Elevator_MoveToFloor(target_floor);
-                }
-                break;
-
-            case STATE_DOOR_OPEN:
-                door_timer++;
-
-
-                if (IO_GetButtonEvent(IO_BTN_DOOR_CLOSE) || (door_timer >= 300u))
-                {
-                    Elevator_CloseDoor();
-                    door_timer = 0u;
-                    current_state = STATE_IDLE;
-                }
-
-                else if (IO_GetButtonEvent(IO_BTN_DOOR_OPEN))
-                {
-                    Elevator_OpenDoor();
-                    door_timer = 0u;
-                }
-                break;
-
-            case STATE_EMERGENCY:
-
-                Elevator_StopMotion();
-
-
-                if (Elevator_CheckFaults() == FAULT_NONE)
-                {
-                    (void)GPIO_SetPinValue(2, 4, PIN_LOW);
-                    current_state = STATE_IDLE;
-                }
-                break;
-
-            default:
-                current_state = STATE_IDLE;
-                break;
-        }
-
-
-        Update_LCD_Display(current_state, current_floor);
     }
 
     return 0;
