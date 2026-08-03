@@ -16,8 +16,8 @@ System_Init:
 	call Safety_Init
 	call Motion_Init
 	sts system_fault_counter,__zero_reg__
-	call Elevator_GetCurPosition
-	sts target_floor,r24
+	sts forced_dir+1,__zero_reg__
+	sts forced_dir,__zero_reg__
 	sts is_moving,__zero_reg__
 /* epilogue start */
 	ret
@@ -33,40 +33,36 @@ System_Update:
 	call Elevator_GetCurPosition
 	mov r28,r24
 	call IO_Update
-	ldi r24,0
-	call IO_GetButtonEvent
-	tst r24
-	breq .L3
-.L5:
-	sts target_floor,__zero_reg__
-.L28:
-	ldi r24,lo8(1)
-	rjmp .L29
-.L3:
 	ldi r24,lo8(4)
 	call IO_GetButtonEvent
 	cpse r24,__zero_reg__
-	rjmp .L5
-	ldi r24,lo8(1)
+	rjmp .L4
+	ldi r24,lo8(5)
+	call IO_GetButtonEvent
+	cpse r24,__zero_reg__
+	rjmp .L4
+	ldi r24,lo8(7)
 	call IO_GetButtonEvent
 	tst r24
-	breq .L6
-.L7:
-	ldi r24,lo8(1)
-	sts target_floor,r24
-.L29:
-	sts is_moving,r24
+	breq .L34
 .L4:
+	ldi r24,lo8(1)
+	ldi r25,0
+	sts forced_dir+1,r25
+	sts forced_dir,r24
+.L36:
+	sts is_moving,r24
+.L7:
 	lds r24,is_moving
 	tst r24
 	brne .+2
-	rjmp .L12
-	lds r24,target_floor
-	cp r24,r28
-	brne .+2
-	rjmp .L12
-	cp r28,r24
-	brsh .L13
+	rjmp .L16
+	lds r24,forced_dir
+	lds r25,forced_dir+1
+	cpi r24,1
+	cpc r25,__zero_reg__
+	breq .+2
+	rjmp .L17
 	ldi r20,lo8(1)
 	ldi r22,lo8(4)
 	ldi r24,0
@@ -76,32 +72,14 @@ System_Update:
 	ldi r24,0
 	call GPIO_SetPinValue
 	ldi r20,lo8(1)
-.L30:
+.L37:
 	ldi r22,lo8(2)
 	ldi r24,lo8(2)
 	call GPIO_SetPinValue
 	ldi r20,0
-	rjmp .L31
-.L6:
-	ldi r24,lo8(5)
-	call IO_GetButtonEvent
-	cpse r24,__zero_reg__
-	rjmp .L7
+	rjmp .L38
+.L34:
 	ldi r24,lo8(6)
-	call IO_GetButtonEvent
-	cpse r24,__zero_reg__
-	rjmp .L7
-	ldi r24,lo8(2)
-	call IO_GetButtonEvent
-	tst r24
-	breq .L8
-.L9:
-	ldi r24,lo8(2)
-.L27:
-	sts target_floor,r24
-	rjmp .L28
-.L8:
-	ldi r24,lo8(7)
 	call IO_GetButtonEvent
 	cpse r24,__zero_reg__
 	rjmp .L9
@@ -109,22 +87,60 @@ System_Update:
 	call IO_GetButtonEvent
 	cpse r24,__zero_reg__
 	rjmp .L9
+	ldi r24,lo8(9)
+	call IO_GetButtonEvent
+	tst r24
+	breq .L35
+.L9:
+	ldi r24,lo8(2)
+	ldi r25,0
+	sts forced_dir+1,r25
+	sts forced_dir,r24
+	ldi r24,lo8(1)
+	rjmp .L36
+.L35:
+	ldi r24,0
+	call IO_GetButtonEvent
+	tst r24
+	breq .L12
+	cpse r28,__zero_reg__
+	rjmp .L9
+	rjmp .L7
+.L12:
+	ldi r24,lo8(1)
+	call IO_GetButtonEvent
+	tst r24
+	breq .L13
+	tst r28
+	brne .+2
+	rjmp .L4
+	cpi r28,lo8(2)
+	brsh .L9
+	rjmp .L7
+.L13:
+	ldi r24,lo8(2)
+	call IO_GetButtonEvent
+	tst r24
+	breq .L15
+	cpi r28,lo8(2)
+	brsh .+2
+	rjmp .L4
+	cpi r28,lo8(2)
+	brne .L9
+	rjmp .L7
+.L15:
 	ldi r24,lo8(3)
 	call IO_GetButtonEvent
 	tst r24
-	breq .L10
-.L11:
-	ldi r24,lo8(3)
-	rjmp .L27
-.L10:
-	ldi r24,lo8(9)
-	call IO_GetButtonEvent
-	cpse r24,__zero_reg__
-	rjmp .L11
+	brne .+2
+	rjmp .L7
+	cpi r28,lo8(3)
+	brsh .+2
 	rjmp .L4
-.L13:
-	cp r24,r28
-	brsh .L14
+	rjmp .L7
+.L17:
+	sbiw r24,2
+	brne .L18
 	ldi r20,0
 	ldi r22,lo8(4)
 	ldi r24,0
@@ -138,17 +154,17 @@ System_Update:
 	ldi r24,lo8(2)
 	call GPIO_SetPinValue
 	ldi r20,lo8(1)
-.L31:
+.L38:
 	ldi r22,lo8(3)
 	ldi r24,lo8(2)
 	call GPIO_SetPinValue
-.L14:
+.L18:
 	ldi r22,lo8(7)
 	ldi r24,lo8(1)
 	call GPIO_GetPinStatus
 	or r24,r25
 	breq .+2
-	rjmp .L15
+	rjmp .L19
 	ldi r20,0
 	ldi r22,lo8(6)
 	ldi r24,0
@@ -157,24 +173,30 @@ System_Update:
 	ldi r22,lo8(7)
 	ldi r24,0
 	call GPIO_SetPinValue
-.L16:
+.L20:
 	ldi r22,lo8(6)
 	ldi r24,lo8(1)
 	call GPIO_GetPinStatus
-	ldi r20,lo8(1)
 	or r24,r25
-	breq .L32
-	ldi r20,0
-.L32:
+	breq .+2
+	rjmp .L22
+	ldi r20,lo8(1)
 	ldi r22,lo8(7)
 	ldi r24,lo8(3)
+	call GPIO_SetPinValue
+	ldi r20,lo8(1)
+.L39:
+	ldi r22,lo8(4)
+	ldi r24,lo8(2)
 	call GPIO_SetPinValue
 	ldi r22,lo8(5)
 	ldi r24,lo8(2)
 	call GPIO_GetPinStatus
 	or r24,r25
-	brne .L20
+	brne .L24
 	sts is_moving,__zero_reg__
+	sts forced_dir+1,__zero_reg__
+	sts forced_dir,__zero_reg__
 	call Elevator_StopMotion
 	ldi r20,0
 	ldi r22,lo8(6)
@@ -192,12 +214,11 @@ System_Update:
 	ldi r22,lo8(3)
 	ldi r24,lo8(2)
 	call GPIO_SetPinValue
-.L20:
+.L24:
 /* epilogue start */
 	pop r28
 	jmp Motion_Update
-.L12:
-	sts is_moving,__zero_reg__
+.L16:
 	ldi r20,0
 	ldi r22,lo8(4)
 	ldi r24,0
@@ -207,22 +228,29 @@ System_Update:
 	ldi r24,0
 	call GPIO_SetPinValue
 	ldi r20,0
-	rjmp .L30
-.L15:
+	rjmp .L37
+.L19:
 	ldi r24,lo8(10)
 	call IO_GetButtonEvent
 	tst r24
-	breq .L17
+	breq .L21
 	call Elevator_OpenDoor
-	rjmp .L16
-.L17:
+	rjmp .L20
+.L21:
 	ldi r24,lo8(11)
 	call IO_GetButtonEvent
 	tst r24
 	brne .+2
-	rjmp .L16
+	rjmp .L20
 	call Elevator_CloseDoor
-	rjmp .L16
+	rjmp .L20
+.L22:
+	ldi r20,0
+	ldi r22,lo8(7)
+	ldi r24,lo8(3)
+	call GPIO_SetPinValue
+	ldi r20,0
+	rjmp .L39
 	.size	System_Update, .-System_Update
 .global	LogFault
 	.type	LogFault, @function
@@ -232,19 +260,19 @@ LogFault:
 /* stack size = 0 */
 .L__stack_usage = 0
 	tst r24
-	breq .L33
+	breq .L40
 	lds r25,system_fault_counter
 	subi r25,lo8(-(1))
 	sts system_fault_counter,r25
 	jmp Fault_Set
-.L33:
+.L40:
 /* epilogue start */
 	ret
 	.size	LogFault, .-LogFault
 	.local	is_moving
 	.comm	is_moving,1,1
-	.local	target_floor
-	.comm	target_floor,1,1
+	.local	forced_dir
+	.comm	forced_dir,2,1
 	.local	system_fault_counter
 	.comm	system_fault_counter,1,1
 	.ident	"GCC: (GNU) 7.3.0"

@@ -5,7 +5,14 @@
 #include "elevator_motion.h"
 
 static uint8_h system_fault_counter = 0u;
-static u8 target_floor = 0u;
+
+typedef enum {
+    DIR_NEUTRAL = 0,
+    DIR_FORCE_UP,
+    DIR_FORCE_DOWN
+} Motion_Direction_t;
+
+static Motion_Direction_t forced_dir = DIR_NEUTRAL;
 static u8 is_moving = 0u;
 
 void System_Init(void)
@@ -14,7 +21,7 @@ void System_Init(void)
     Safety_Init();
     Motion_Init();
     system_fault_counter = 0u;
-    target_floor = Elevator_GetCurPosition();
+    forced_dir = DIR_NEUTRAL;
     is_moving = 0u;
 }
 
@@ -22,45 +29,59 @@ void System_Update(void)
 {
     u8 current_floor = Elevator_GetCurPosition();
 
-    /* 1. تحديث مدخلات الأزرار والحساسات */
+    /* 1. تحديث مدخلات الأزرار */
     IO_Update();
 
-    /* 2. تسجيل الطابق المطلوب عند ضغط أي زر من أزرار الـ Hoist */
-    if (IO_GetButtonEvent(IO_BTN_CAR_CALL_G) || IO_GetButtonEvent(IO_BTN_HALL_UP_G))
+    /* 2. فحص أزرار الصعود (Hall Up) -> دوران يمين + LED UP */
+    if (IO_GetButtonEvent(IO_BTN_HALL_UP_G) || 
+        IO_GetButtonEvent(IO_BTN_HALL_UP_1) || 
+        IO_GetButtonEvent(IO_BTN_HALL_UP_2))
     {
-        target_floor = 0u;
+        forced_dir = DIR_FORCE_UP;
         is_moving = 1u;
     }
-    else if (IO_GetButtonEvent(IO_BTN_CAR_CALL_1) || IO_GetButtonEvent(IO_BTN_HALL_UP_1) || IO_GetButtonEvent(IO_BTN_HALL_DOWN_1))
+    /* 3. فحص أزرار النزول (Hall Down) -> دوران شمال + LED DOWN */
+    else if (IO_GetButtonEvent(IO_BTN_HALL_DOWN_1) || 
+             IO_GetButtonEvent(IO_BTN_HALL_DOWN_2) || 
+             IO_GetButtonEvent(IO_BTN_HALL_DOWN_3))
     {
-        target_floor = 1u;
+        forced_dir = DIR_FORCE_DOWN;
         is_moving = 1u;
     }
-    else if (IO_GetButtonEvent(IO_BTN_CAR_CALL_2) || IO_GetButtonEvent(IO_BTN_HALL_UP_2) || IO_GetButtonEvent(IO_BTN_HALL_DOWN_2))
+    /* 4. فحص أزرار الكابينة (Car Calls) */
+    else if (IO_GetButtonEvent(IO_BTN_CAR_CALL_G))
     {
-        target_floor = 2u;
-        is_moving = 1u;
+        if (current_floor > 0u) { forced_dir = DIR_FORCE_DOWN; is_moving = 1u; }
     }
-    else if (IO_GetButtonEvent(IO_BTN_CAR_CALL_3) || IO_GetButtonEvent(IO_BTN_HALL_DOWN_3))
+    else if (IO_GetButtonEvent(IO_BTN_CAR_CALL_1))
     {
-        target_floor = 3u;
-        is_moving = 1u;
+        if (current_floor < 1u) { forced_dir = DIR_FORCE_UP; is_moving = 1u; }
+        else if (current_floor > 1u) { forced_dir = DIR_FORCE_DOWN; is_moving = 1u; }
+    }
+    else if (IO_GetButtonEvent(IO_BTN_CAR_CALL_2))
+    {
+        if (current_floor < 2u) { forced_dir = DIR_FORCE_UP; is_moving = 1u; }
+        else if (current_floor > 2u) { forced_dir = DIR_FORCE_DOWN; is_moving = 1u; }
+    }
+    else if (IO_GetButtonEvent(IO_BTN_CAR_CALL_3))
+    {
+        if (current_floor < 3u) { forced_dir = DIR_FORCE_UP; is_moving = 1u; }
     }
 
-    /* 3. إدارة حركة الـ Hoist Motor بناءً على المقارنة المستمرة بين الحالي والهدف */
-    if (is_moving && (current_floor != target_floor))
+    /* 5. تطبيق الحركة والإشارات بناءً على الاتجاه المحدد */
+    if (is_moving != 0u)
     {
-        if (target_floor > current_floor)
+        if (forced_dir == DIR_FORCE_UP)
         {
-            /* صعود: دوران يمين */
+            /* دوران يمين + تشغيل LED UP */
             (void)GPIO_SetPinValue(L298_PORT, HOIST_IN1_PIN, PIN_HIGH);
             (void)GPIO_SetPinValue(L298_PORT, HOIST_IN2_PIN, PIN_LOW);
             (void)GPIO_SetPinValue(LED_UP_PORT, LED_UP_PIN, PIN_HIGH);
             (void)GPIO_SetPinValue(LED_DOWN_PORT, LED_DOWN_PIN, PIN_LOW);
         }
-        else if (target_floor < current_floor)
+        else if (forced_dir == DIR_FORCE_DOWN)
         {
-            /* نزول: دوران شمال */
+            /* دوران شمال + تشغيل LED DOWN */
             (void)GPIO_SetPinValue(L298_PORT, HOIST_IN1_PIN, PIN_LOW);
             (void)GPIO_SetPinValue(L298_PORT, HOIST_IN2_PIN, PIN_HIGH);
             (void)GPIO_SetPinValue(LED_UP_PORT, LED_UP_PIN, PIN_LOW);
@@ -69,15 +90,14 @@ void System_Update(void)
     }
     else
     {
-        /* الوصول للطابق أو التوقف */
-        is_moving = 0u;
+        /* توقف الموتور وإطفاء الـ LEDs */
         (void)GPIO_SetPinValue(L298_PORT, HOIST_IN1_PIN, PIN_LOW);
         (void)GPIO_SetPinValue(L298_PORT, HOIST_IN2_PIN, PIN_LOW);
         (void)GPIO_SetPinValue(LED_UP_PORT, LED_UP_PIN, PIN_LOW);
         (void)GPIO_SetPinValue(LED_DOWN_PORT, LED_DOWN_PIN, PIN_LOW);
     }
 
-    /* 4. التحكم المباشر في موتور الباب (Door Motor) */
+    /* 6. التحكم في موتور الباب (Door Motor) */
     if (GPIO_GetPinStatus(GPIO_PORTB, GPIO_PIN7) == PIN_LOW) /* Door Safety Edge */
     {
         (void)GPIO_SetPinValue(L298_PORT, DOOR_IN3_PIN, PIN_LOW);
@@ -92,19 +112,23 @@ void System_Update(void)
         Elevator_CloseDoor();
     }
 
-    /* 5. الإنذارات وتوقف الطوارئ */
-    if (GPIO_GetPinStatus(GPIO_PORTB, GPIO_PIN6) == PIN_LOW) /* Emergency Alarm */
+    /* 7. إنذار الطوارئ (Emergency Alarm) -> تشغيل الـ Buzzer و Overload LED معاً */
+    if (GPIO_GetPinStatus(GPIO_PORTB, GPIO_PIN6) == PIN_LOW) 
     {
         (void)GPIO_SetPinValue(IO_BUZZER_PORT, IO_BUZZER_PIN, PIN_HIGH);
+        (void)GPIO_SetPinValue(LED_OVERLOAD_PORT, LED_OVERLOAD_PIN, PIN_HIGH); /* تشغيل Overload LED */
     }
     else
     {
         (void)GPIO_SetPinValue(IO_BUZZER_PORT, IO_BUZZER_PIN, PIN_LOW);
+        (void)GPIO_SetPinValue(LED_OVERLOAD_PORT, LED_OVERLOAD_PIN, PIN_LOW);  /* إطفاء Overload LED */
     }
 
-    if (GPIO_GetPinStatus(GPIO_PORTC, GPIO_PIN5) == PIN_LOW) /* Emergency Stop */
+    /* 8. توقف الطوارئ (Emergency Stop) */
+    if (GPIO_GetPinStatus(GPIO_PORTC, GPIO_PIN5) == PIN_LOW) 
     {
         is_moving = 0u;
+        forced_dir = DIR_NEUTRAL;
         Elevator_StopMotion();
         (void)GPIO_SetPinValue(L298_PORT, DOOR_IN3_PIN, PIN_LOW);
         (void)GPIO_SetPinValue(L298_PORT, DOOR_IN4_PIN, PIN_LOW);

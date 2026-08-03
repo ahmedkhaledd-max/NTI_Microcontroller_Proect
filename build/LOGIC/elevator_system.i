@@ -447,7 +447,14 @@ void Elevator_MoveToFloor(uint8_h floor);
 # 6 "LOGIC/elevator_system.c" 2
 
 static uint8_h system_fault_counter = 0u;
-static u8 target_floor = 0u;
+
+typedef enum {
+    DIR_NEUTRAL = 0,
+    DIR_FORCE_UP,
+    DIR_FORCE_DOWN
+} Motion_Direction_t;
+
+static Motion_Direction_t forced_dir = DIR_NEUTRAL;
 static u8 is_moving = 0u;
 
 void System_Init(void)
@@ -456,7 +463,7 @@ void System_Init(void)
     Safety_Init();
     Motion_Init();
     system_fault_counter = 0u;
-    target_floor = Elevator_GetCurPosition();
+    forced_dir = DIR_NEUTRAL;
     is_moving = 0u;
 }
 
@@ -468,31 +475,45 @@ void System_Update(void)
     IO_Update();
 
 
-    if (IO_GetButtonEvent(IO_BTN_CAR_CALL_G) || IO_GetButtonEvent(IO_BTN_HALL_UP_G))
+    if (IO_GetButtonEvent(IO_BTN_HALL_UP_G) ||
+        IO_GetButtonEvent(IO_BTN_HALL_UP_1) ||
+        IO_GetButtonEvent(IO_BTN_HALL_UP_2))
     {
-        target_floor = 0u;
-        is_moving = 1u;
-    }
-    else if (IO_GetButtonEvent(IO_BTN_CAR_CALL_1) || IO_GetButtonEvent(IO_BTN_HALL_UP_1) || IO_GetButtonEvent(IO_BTN_HALL_DOWN_1))
-    {
-        target_floor = 1u;
-        is_moving = 1u;
-    }
-    else if (IO_GetButtonEvent(IO_BTN_CAR_CALL_2) || IO_GetButtonEvent(IO_BTN_HALL_UP_2) || IO_GetButtonEvent(IO_BTN_HALL_DOWN_2))
-    {
-        target_floor = 2u;
-        is_moving = 1u;
-    }
-    else if (IO_GetButtonEvent(IO_BTN_CAR_CALL_3) || IO_GetButtonEvent(IO_BTN_HALL_DOWN_3))
-    {
-        target_floor = 3u;
+        forced_dir = DIR_FORCE_UP;
         is_moving = 1u;
     }
 
-
-    if (is_moving && (current_floor != target_floor))
+    else if (IO_GetButtonEvent(IO_BTN_HALL_DOWN_1) ||
+             IO_GetButtonEvent(IO_BTN_HALL_DOWN_2) ||
+             IO_GetButtonEvent(IO_BTN_HALL_DOWN_3))
     {
-        if (target_floor > current_floor)
+        forced_dir = DIR_FORCE_DOWN;
+        is_moving = 1u;
+    }
+
+    else if (IO_GetButtonEvent(IO_BTN_CAR_CALL_G))
+    {
+        if (current_floor > 0u) { forced_dir = DIR_FORCE_DOWN; is_moving = 1u; }
+    }
+    else if (IO_GetButtonEvent(IO_BTN_CAR_CALL_1))
+    {
+        if (current_floor < 1u) { forced_dir = DIR_FORCE_UP; is_moving = 1u; }
+        else if (current_floor > 1u) { forced_dir = DIR_FORCE_DOWN; is_moving = 1u; }
+    }
+    else if (IO_GetButtonEvent(IO_BTN_CAR_CALL_2))
+    {
+        if (current_floor < 2u) { forced_dir = DIR_FORCE_UP; is_moving = 1u; }
+        else if (current_floor > 2u) { forced_dir = DIR_FORCE_DOWN; is_moving = 1u; }
+    }
+    else if (IO_GetButtonEvent(IO_BTN_CAR_CALL_3))
+    {
+        if (current_floor < 3u) { forced_dir = DIR_FORCE_UP; is_moving = 1u; }
+    }
+
+
+    if (is_moving != 0u)
+    {
+        if (forced_dir == DIR_FORCE_UP)
         {
 
             (void)GPIO_SetPinValue(0, 4, PIN_HIGH);
@@ -500,7 +521,7 @@ void System_Update(void)
             (void)GPIO_SetPinValue(2, 2, PIN_HIGH);
             (void)GPIO_SetPinValue(2, 3, PIN_LOW);
         }
-        else if (target_floor < current_floor)
+        else if (forced_dir == DIR_FORCE_DOWN)
         {
 
             (void)GPIO_SetPinValue(0, 4, PIN_LOW);
@@ -512,7 +533,6 @@ void System_Update(void)
     else
     {
 
-        is_moving = 0u;
         (void)GPIO_SetPinValue(0, 4, PIN_LOW);
         (void)GPIO_SetPinValue(0, 5, PIN_LOW);
         (void)GPIO_SetPinValue(2, 2, PIN_LOW);
@@ -538,15 +558,19 @@ void System_Update(void)
     if (GPIO_GetPinStatus(1, 6) == PIN_LOW)
     {
         (void)GPIO_SetPinValue(3, 7, PIN_HIGH);
+        (void)GPIO_SetPinValue(2, 4, PIN_HIGH);
     }
     else
     {
         (void)GPIO_SetPinValue(3, 7, PIN_LOW);
+        (void)GPIO_SetPinValue(2, 4, PIN_LOW);
     }
+
 
     if (GPIO_GetPinStatus(2, 5) == PIN_LOW)
     {
         is_moving = 0u;
+        forced_dir = DIR_NEUTRAL;
         Elevator_StopMotion();
         (void)GPIO_SetPinValue(0, 6, PIN_LOW);
         (void)GPIO_SetPinValue(0, 7, PIN_LOW);
